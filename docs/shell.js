@@ -181,3 +181,123 @@ window.addEventListener('offline', () => document.dispatchEvent(new CustomEvent(
 export function haptic(pattern = 12) {
   try { navigator.vibrate?.(pattern); } catch {}
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// THEME — light / dark / system (auto-detect + persistence)
+// ═══════════════════════════════════════════════════════════════════
+
+const THEME_KEY = 'naijagaz.theme.v1';
+const THEMES = ['system', 'light', 'dark'];
+const THEME_ICONS = { system: '⚙', light: '☀', dark: '🌙' };
+const META_THEME_COLOR = { light: '#0B3FE0', dark: '#08101F' };
+
+export function getTheme() { return localStorage.getItem(THEME_KEY) || 'system'; }
+export function getEffectiveTheme() {
+  const t = getTheme();
+  return t === 'system'
+    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : t;
+}
+export function setTheme(t) {
+  if (!THEMES.includes(t)) return;
+  try { localStorage.setItem(THEME_KEY, t); } catch {}
+  applyTheme();
+}
+export function cycleTheme() {
+  const next = THEMES[(THEMES.indexOf(getTheme()) + 1) % THEMES.length];
+  setTheme(next);
+  return next;
+}
+
+function applyTheme() {
+  const eff = getEffectiveTheme();
+  document.documentElement.dataset.theme = eff;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = META_THEME_COLOR[eff];
+}
+
+// Apply ASAP — before first paint avoids a light→dark flash on dark systems
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (getTheme() === 'system') applyTheme();
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// THEME TOGGLE BUTTON — auto-injected on every page
+// ═══════════════════════════════════════════════════════════════════
+
+function injectThemeToggle() {
+  if (document.getElementById('theme-toggle')) return;
+  const btn = document.createElement('button');
+  btn.id = 'theme-toggle';
+  btn.className = 'theme-toggle';
+  btn.setAttribute('aria-label', 'Toggle theme');
+  document.body.appendChild(btn);
+
+  const refresh = () => {
+    const t = getTheme();
+    btn.title = `Theme: ${t} (tap to switch)`;
+    btn.textContent = THEME_ICONS[t];
+  };
+  refresh();
+
+  btn.addEventListener('click', () => {
+    cycleTheme();
+    refresh();
+    haptic(8);
+    toast(`Theme: ${getTheme()}`);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CONNECTIVITY PIP — visible only when offline
+// ═══════════════════════════════════════════════════════════════════
+
+function injectConnectivityPip() {
+  if (document.getElementById('connectivity-pip')) return;
+  const pip = document.createElement('div');
+  pip.id = 'connectivity-pip';
+  pip.className = 'connectivity-pip';
+  pip.textContent = 'OFFLINE';
+  pip.hidden = true;
+  document.body.appendChild(pip);
+
+  const update = () => { pip.hidden = navigator.onLine; };
+  window.addEventListener('online', () => { update(); toast('Back online ✓'); });
+  window.addEventListener('offline', () => { update(); toast('You are offline'); });
+  update();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TOAST — small notification at bottom of screen
+// ═══════════════════════════════════════════════════════════════════
+
+let _toastTimer = null;
+export function toast(msg, ms = 2200) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.remove('dismissing');
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => {
+    t.classList.add('dismissing');
+    setTimeout(() => { if (t.parentNode) t.remove(); }, 300);
+  }, ms);
+}
+
+// ── Boot the auto-injected widgets ────────────────────────
+
+function bootWidgets() {
+  injectThemeToggle();
+  injectConnectivityPip();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootWidgets);
+} else {
+  bootWidgets();
+}
