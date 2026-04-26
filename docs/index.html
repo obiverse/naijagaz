@@ -42,11 +42,12 @@
       <img src="icon.svg" alt="NaijaGaz" class="mark-img" width="130" height="130">
     </div>
 
+    <p class="hero-greeting" id="hero-greeting" hidden></p>
     <h1>Cooking gas,<br>almost instantly.</h1>
     <p class="lede">Tap, confirm, pay on delivery. No queues. No guessing prices.</p>
 
     <div class="hero-actions">
-      <a href="order.html" class="btn btn-flame">Order gas</a>
+      <a href="order.html" class="btn btn-flame" id="primary-cta">Order gas</a>
 
       <div class="or-divider">or</div>
 
@@ -91,24 +92,47 @@
 </div>
 
 <script type="module">
-  import { ready, recallLast, haptic, primaryOperator } from './shell.js';
+  import {
+    ready, recallLast, haptic, primaryOperator,
+    inferContext, suggestGreeting, suggestPrimaryCta
+  } from './shell.js';
   import { WHATSAPP_ORDER_TEMPLATE } from './config.js';
 
   await ready;
 
-  // Landing page CTA hits the primary operator (NG line). The full
-  // multi-operator dispatch happens on the order/success step where each
-  // operator has its own button.
-  const op = primaryOperator();
-  document.getElementById('whatsapp-link').href =
-    `https://wa.me/${op.number}?text=${encodeURIComponent(WHATSAPP_ORDER_TEMPLATE)}`;
-  document.getElementById('whatsapp-link').addEventListener('click', () => haptic(12));
+  // ── Smart user-state adaptation ──
+  const ctx = inferContext();
 
-  // Reorder shortcut visibility
+  const greeting = suggestGreeting(ctx);
+  if (greeting) {
+    const el = document.getElementById('hero-greeting');
+    el.textContent = greeting;
+    el.hidden = false;
+  }
+
+  const ctaLabel = suggestPrimaryCta(ctx);
+  if (ctaLabel) {
+    const cta = document.getElementById('primary-cta');
+    cta.textContent = ctaLabel;
+    // If reorder-context, deep-link to /again to skip steps
+    if (ctx.lastOrderSize && (ctx.isRefillWindow || ctx.isOverdueRefill)) {
+      cta.href = 'again.html';
+    } else if (ctx.hasUnfinishedDraft) {
+      cta.href = 'order.html';
+    }
+  }
+
+  // ── Reorder shortcut visibility ──
   const last = recallLast();
   if (last && last.order_id) {
     document.getElementById('reorder-link').hidden = false;
   }
+
+  // ── Landing page CTA hits the primary operator (NG line) ──
+  const op = primaryOperator();
+  document.getElementById('whatsapp-link').href =
+    `https://wa.me/${op.number}?text=${encodeURIComponent(WHATSAPP_ORDER_TEMPLATE)}`;
+  document.getElementById('whatsapp-link').addEventListener('click', () => haptic(12));
 
   // ── Track-an-order bottom sheet ──
   const sheet = document.getElementById('track-sheet');

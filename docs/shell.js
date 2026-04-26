@@ -442,6 +442,130 @@ function wireInstallButtons() {
 // Track this visit for engagement
 trackEngagement('visit');
 
+// ═══════════════════════════════════════════════════════════════════
+// USER STATE INFERENCE — smart fresh/returning classifier
+//
+// Combines weak signals (visit count, order history, install state,
+// localStorage residue, refill cadence, time-of-day) into a single
+// state label + a context object. The UI layer reads these to adapt
+// copy and CTAs without ever pestering — the right ask at the right
+// moment, the right greeting at the right cadence.
+//
+//   first-time      no signals at all
+//   browsing        first visit, no orders, brief dwell
+//   returning       2+ visits OR longer dwell, no orders yet
+//   customer        1-2 orders placed
+//   power-user      3+ orders placed
+//   *-installed     suffix when running as installed PWA
+// ═══════════════════════════════════════════════════════════════════
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function inferUserState() {
+  const e = loadEngagement();
+  const visits = e.visits || 0;
+  const orders = e.orders || 0;
+  const firstVisit = e.firstVisit;
+  const dwellMs = firstVisit ? Date.now() - firstVisit : 0;
+
+  let state = 'first-time';
+  if (visits >= 1 || firstVisit) state = 'browsing';
+  if (visits >= 2 || dwellMs > 60_000) state = 'returning';
+  if (orders >= 1) state = 'customer';
+  if (orders >= 3) state = 'power-user';
+  if (isInstalled()) state += '-installed';
+  return state;
+}
+
+export function inferContext() {
+  const e = loadEngagement();
+  const last = recallLast();
+  const draft = loadDraft();
+  const state = inferUserState();
+
+  const ctx = {
+    state,
+    bucket: state.replace('-installed', ''),
+    isInstalled: isInstalled(),
+    visits: e.visits || 0,
+    orders: e.orders || 0,
+    hasUnfinishedDraft: !!(draft && draft.size),
+    hasLastOrder: !!(last && last.order_id),
+    lastOrderSize: last?.size || null,
+    daysSinceLastOrder: null,
+    isRefillWindow: false,
+    isOverdueRefill: false,
+    timeOfDay: null,
+    timeOfDayLabel: null,
+    isFirstVisitToday: false,
+  };
+
+  // Refill cadence — once we know the last order timestamp.
+  // 12.5kg ≈ 21 days; window: 18-26 days = "ready"; > 28 = "overdue".
+  if (last && last.timestamp) {
+    const ageMs = Date.now() - last.timestamp;
+    const days = Math.floor(ageMs / DAY_MS);
+    ctx.daysSinceLastOrder = days;
+    ctx.isRefillWindow = days >= 18 && days <= 28;
+    ctx.isOverdueRefill = days > 28;
+  } else if (last) {
+    // Older saves didn't store a timestamp; treat as 'somewhere in past'
+    ctx.daysSinceLastOrder = -1;
+  }
+
+  // Time-of-day
+  const d = new Date();
+  const h = d.getHours();
+  ctx.timeOfDay = h;
+  ctx.timeOfDayLabel =
+    h < 5  ? 'late-night' :
+    h < 11 ? 'morning' :
+    h < 16 ? 'afternoon' :
+    h < 20 ? 'evening' : 'night';
+
+  // First visit today — useful for "good morning" type greetings
+  if (e.lastSeen) {
+    const last_d = new Date(e.lastSeen);
+    ctx.isFirstVisitToday = last_d.toDateString() !== d.toDateString();
+  } else {
+    ctx.isFirstVisitToday = true;
+  }
+
+  return ctx;
+}
+
+// Suggested greeting per context — UI layer can call this for the
+// landing hero pre-line. Returns null when no override is appropriate
+// (let the static headline shine).
+export function suggestGreeting(ctx = inferContext()) {
+  if (ctx.bucket === 'first-time' || ctx.bucket === 'browsing') return null;
+  if (ctx.isOverdueRefill && ctx.lastOrderSize) {
+    return `It's been ${ctx.daysSinceLastOrder} days. Time for a refill?`;
+  }
+  if (ctx.isRefillWindow && ctx.lastOrderSize) {
+    return `Ready for your next ${ctx.lastOrderSize}kg?`;
+  }
+  if (ctx.hasUnfinishedDraft) {
+    return 'Pick up where you left off?';
+  }
+  if (ctx.bucket === 'power-user') {
+    const t = ctx.timeOfDayLabel;
+    return t === 'morning' ? 'Good morning 👋' : t === 'evening' ? 'Good evening 👋' : 'Welcome back 👋';
+  }
+  if (ctx.bucket === 'customer' || ctx.bucket === 'returning') {
+    return 'Welcome back.';
+  }
+  return null;
+}
+
+// Suggested primary CTA label — the "what should this hero button say?"
+// Returns null when default ("Order gas") is right.
+export function suggestPrimaryCta(ctx = inferContext()) {
+  if (ctx.isOverdueRefill || ctx.isRefillWindow) return 'Reorder ' + (ctx.lastOrderSize || '') + 'kg';
+  if (ctx.hasUnfinishedDraft) return 'Continue order';
+  return null;
+}
+
 // First launch as installed — welcome moment
 if (isInstalled() && !localStorage.getItem(FIRST_INSTALLED_KEY)) {
   try { localStorage.setItem(FIRST_INSTALLED_KEY, String(Date.now())); } catch {}
