@@ -1,11 +1,25 @@
 # NaijaGaz
 
-> The coordination layer for LPG refill in Abuja. PWA + Sheet + SMS.
+> Cooking gas, almost instantly. PWA + Wasm core + WhatsApp-first ordering.
+
+**Live:** https://obiverse.github.io/naijagaz/
 
 This repo holds the customer-facing PWA and the Apps Script broker that
 bridges it to the operator's Google Sheet. See
 [docs/naijagaz-whitepaper-v2.md](docs/naijagaz-whitepaper-v2.md) for the
-full grimoire.
+full grimoire (currently at v2.4).
+
+## Order channels
+
+[docs/config.js](docs/config.js) exports `ORDER_MODE`:
+
+- `'whatsapp'` (default) — `Place order` opens WhatsApp at `+12409750431`
+  with a structured prefilled message. Operator pastes into the Sheet.
+  Zero infrastructure to test end-to-end.
+- `'broker'` — POSTs to the Apps Script Web App. Auto SMS via Termii.
+  Requires the broker setup ([apps-script/README.md](apps-script/README.md)).
+
+Flip the switch when ready to scale; nothing else changes.
 
 ## Architecture
 
@@ -61,8 +75,15 @@ Prerequisites: Rust stable, `wasm-pack`, Python 3 (for the dev server).
 git push origin main
 ```
 
+Pages currently builds in **legacy / branch mode** from `main:/docs/`
+(takes ~30-60s after each push). The Wasm artifacts in `docs/pkg/` are
+checked in, so no Actions runner is required.
+
 The [.github/workflows/deploy.yml](.github/workflows/deploy.yml) workflow
-runs `cargo test`, builds the Wasm, and publishes `docs/` to Pages.
+is wired up to take over once Actions is unblocked on the repo's owning
+account. To switch back: GitHub repo → Settings → Pages → Source →
+"GitHub Actions". The workflow runs `cargo test`, builds the Wasm fresh,
+and publishes — useful for catching crate-level regressions in CI.
 
 ## File map
 
