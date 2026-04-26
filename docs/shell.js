@@ -4,7 +4,9 @@
 // ═══════════════════════════════════════════════
 
 import init, * as core from './pkg/naijagaz_core/naijagaz_core.js';
-import { BROKER_URL } from './config.js';
+import { BROKER_URL, ORDER_MODE, WHATSAPP_NUMBER } from './config.js';
+
+export { ORDER_MODE };
 
 // ── Wasm boot ─────────────────────────────────────
 
@@ -65,6 +67,34 @@ export async function submitOrder(payload) {
   return res.json();
 }
 
+// ── WhatsApp mode: build a prefilled wa.me URL from an order payload ──
+//
+// Note: callers MUST invoke window.open(url, '_blank') synchronously inside
+// the originating user gesture (otherwise iOS Safari blocks it). That's why
+// this is a pure URL builder — no DOM side effects.
+//
+const DISTRICT_LABEL = { lugbe: 'Lugbe', kubwa: 'Kubwa', nyanya: 'Nyanya', gwarinpa: 'Gwarinpa' };
+const PAYMENT_LABEL  = { cash: 'Cash', transfer: 'Bank transfer', pos: 'POS' };
+
+export function composeWhatsAppOrderUrl(p) {
+  const total = price(p.size);
+  const lines = [
+    '🔥 NaijaGaz Order',
+    '',
+    `Cylinder: ${p.size}kg refill — ${naira(total)}`,
+    `District: ${DISTRICT_LABEL[p.district] || p.district}`,
+    `Address: ${p.address}`,
+  ];
+  if (p.landmark) lines.push(`Landmark: ${p.landmark}`);
+  lines.push(`Phone: ${p.phone}`);
+  if (p.name) lines.push(`Name: ${p.name}`);
+  lines.push(`Payment: ${PAYMENT_LABEL[p.payment] || p.payment} on delivery`);
+  lines.push('');
+  lines.push(`Total: ${naira(total)}`);
+
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`;
+}
+
 export async function fetchOrder(orderId) {
   if (!BROKER_URL || BROKER_URL.startsWith('PASTE_')) {
     throw new Error('BROKER_NOT_CONFIGURED');
@@ -107,3 +137,9 @@ export function isInstallable() { return _deferredPrompt !== null; }
 export const isOnline = () => navigator.onLine;
 window.addEventListener('online', () => document.dispatchEvent(new CustomEvent('naijagaz:online')));
 window.addEventListener('offline', () => document.dispatchEvent(new CustomEvent('naijagaz:offline')));
+
+// ── Haptic feedback (Android only — iOS Safari ignores) ──
+
+export function haptic(pattern = 12) {
+  try { navigator.vibrate?.(pattern); } catch {}
+}

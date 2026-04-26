@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| **Version** | 2.2 |
+| **Version** | 2.3 |
 | **Date** | April 2026 |
-| **Region** | Abuja, Nigeria (Lugbe + Kubwa + Nyanya cluster) |
+| **Region** | Abuja, Nigeria (Lugbe + Kubwa + Nyanya + Gwarinpa cluster) |
 | **Model** | Asset-light aggregator |
 | **Phase 0 Capital** | < ₦1,000,000 |
 | **Team** | 3 cofounders (Operator, Builder, Closer) |
@@ -40,7 +40,7 @@ This is how DoorDash, Uber, and Jumia started. It is not novel. It is correct.
 
 ## 🎯 2. THE PROBLEM
 
-Households in Lugbe, Kubwa, and Nyanya share a daily pain:
+Households in Lugbe, Kubwa, Nyanya, and Gwarinpa share a daily pain:
 
 - **Time:** A refill round-trip eats 2-4 hours
 - **Price opacity:** ₦14,500 here, ₦18,000 there, no clear reason
@@ -153,7 +153,7 @@ Same. WhatsApp + cash + a branded vest. No rider app in Phase 0.
 
 ### 6.1 Vendor Selection Criteria
 
-- Located in or adjacent to Lugbe/Kubwa/Nyanya cluster
+- Located in or adjacent to Lugbe/Kubwa/Nyanya/Gwarinpa cluster
 - Modern fill scale (NOT eyeball measurement) — this is non-negotiable
 - DPR/NMDPRA licensed
 - Owner-operator (decisions don't go through a chain)
@@ -168,7 +168,7 @@ Same. WhatsApp + cash + a branded vest. No rider app in Phase 0.
 | Volume commitment | We commit to minimum 30 orders/week by month 2 |
 | Quality standards | Full fills (verified weekly by spot-check), intact seals, max 30-min prep time |
 | Branding | Customer-facing receipts say NaijaGaz only. Vendor name not disclosed. |
-| Exclusivity | Vendor is exclusive to NaijaGaz in our 3 districts. We are non-exclusive. |
+| Exclusivity | Vendor is exclusive to NaijaGaz in our 4 districts. We are non-exclusive. |
 | Term | 6 months, 30-day exit either side |
 | Payment | Daily settlement at end of day. We collect from customers, pay vendor next morning. |
 
@@ -259,7 +259,7 @@ The Sheet has 4 tabs.
 | customer_phone | string | E.164 (+234...) |
 | customer_name | string | Optional |
 | address_line | string | Free text |
-| district | enum | Lugbe / Kubwa / Nyanya |
+| district | enum | Lugbe / Kubwa / Nyanya / Gwarinpa |
 | gps_lat | number | If captured |
 | gps_lng | number | If captured |
 | cylinder_size | enum | 5 / 6 / 12.5 / 25 (kg) |
@@ -430,7 +430,7 @@ Day 60 is decision day. If we hit these, we raise ₦5-8M for Phase 1 (the cylin
 ### Days 1-2 — The Vendor Hunt
 **Owner: Operator**
 
-- List 10 gas plants in/around Kubwa, Lugbe, Nyanya (Google Maps + driving)
+- List 12 gas plants in/around Kubwa, Lugbe, Nyanya, Gwarinpa (Google Maps + driving)
 - Visit each in person; never pitch over the phone
 - Pitch script: *"I'll bring you 50 paid orders a month at no marketing cost. ₦1,500 below your retail. We split work — you fill, we deliver and handle customers. Sign a 6-month deal today, exit with 30 days notice."*
 - End of Day 2: 1 vendor signed. Hard requirement.
@@ -728,7 +728,7 @@ function dailyRefillNudge() {
 
 These get answered by Day 14 or Phase 0 fails:
 
-1. What % of Lugbe/Kubwa/Nyanya households have a smartphone capable of running the PWA? (We assume >70% but must verify.)
+1. What % of Lugbe/Kubwa/Nyanya/Gwarinpa households have a smartphone capable of running the PWA? (We assume >70% but must verify.)
 2. What's the actual current retail price of 12.5kg in each of the 3 districts on a normal Tuesday? (We assume ₦16,500-₦18,000 but must verify in person.)
 3. Will customers pay on delivery via transfer reliably, or will we have a "transfer pending" fraud problem?
 4. What's the actual peak demand window? (Early morning vs evening?)
@@ -799,6 +799,7 @@ For Claude / engineers / operators picking this up cold, in priority order:
 
 **Changelog**
 - v1.0: Original whitepaper (full marketplace, Flutter, multi-vendor matching)
-- v2.0: Asset-light coordination layer, PWA + Sheet, single-vendor Phase 0, Lugbe/Kubwa/Nyanya cluster, ₦1M Phase 0 budget, 21-day refill nudge as core mechanic
+- v2.0: Asset-light coordination layer, PWA + Sheet, single-vendor Phase 0, Lugbe/Kubwa/Nyanya/Gwarinpa cluster, ₦1M Phase 0 budget, 21-day refill nudge as core mechanic
 - v2.1: Renamed venture from GasGo to NaijaGaz — more rooted, more local, signals identity in one word
 - v2.2: Fused the OBIVERSE WASM substrate. Stack moved from Next.js/Vercel to static HTML + Rust→Wasm on GitHub Pages, with Apps Script Web App as the Sheets broker. Logic core compiles to a portable artifact that survives the Phase 1 Postgres migration. ₦70k/yr hosting savings reallocated to buffer.
+- v2.3: Added Gwarinpa as the 4th Phase-0 district — denser estate cluster in NW Abuja, complements the Lugbe/Kubwa/Nyanya triangle. Wasm validator, Apps Script broker, and PWA pill grid all updated.

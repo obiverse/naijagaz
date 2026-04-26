@@ -15,6 +15,31 @@
 </head>
 <body>
 
+  <!-- ── Cinematic success overlay (fresh=1) ────────── -->
+  <div class="success-overlay" id="success-overlay" hidden aria-hidden="true">
+    <div class="success-content">
+      <div class="success-mark" aria-hidden="true">
+        <svg class="success-orbit" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+          <g>
+            <circle cx="140"   cy="14"     r="4.5"/>
+            <circle cx="221"   cy="43.5"   r="4.5"/>
+            <circle cx="264.1" cy="118.1"  r="4.5"/>
+            <circle cx="249.1" cy="203"    r="4.5"/>
+            <circle cx="183.1" cy="258.4"  r="4.5"/>
+            <circle cx="96.9"  cy="258.4"  r="4.5"/>
+            <circle cx="30.9"  cy="203"    r="4.5"/>
+            <circle cx="15.9"  cy="118.1"  r="4.5"/>
+            <circle cx="59"    cy="43.5"   r="4.5"/>
+          </g>
+        </svg>
+        <img src="icon.svg" class="success-flame" alt="">
+      </div>
+      <h2 class="success-title">Order placed</h2>
+      <p class="success-id" id="success-id">—</p>
+      <p class="success-sub">Your gas is on the way 🔥</p>
+    </div>
+  </div>
+
   <header class="topbar">
     <a href="index.html" class="back" aria-label="Back">←</a>
     <span class="step-label">Tracking</span>
@@ -23,7 +48,10 @@
   <main class="container">
 
     <div class="status-card">
-      <div class="status-banner" id="banner">Order received 🔥</div>
+      <div class="status-icon" id="status-icon">
+        <span id="status-emoji">📦</span>
+      </div>
+      <div class="status-banner" id="banner">Order received</div>
       <div class="status-id" id="order-id">—</div>
 
       <ol class="timeline" id="timeline">
@@ -48,17 +76,29 @@
   </main>
 
   <script type="module">
-    import { ready, fetchOrder } from './shell.js';
+    import { ready, fetchOrder, haptic } from './shell.js';
 
     await ready;
 
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
     const fresh = params.has('fresh');
+
     const banner = document.getElementById('banner');
     const idEl = document.getElementById('order-id');
     const statusText = document.getElementById('status-text');
     const riderInfo = document.getElementById('rider-info');
+    const iconBox = document.getElementById('status-icon');
+    const emojiEl = document.getElementById('status-emoji');
+
+    // ── Cinematic success: fade out after 3.2s, then the timeline takes over ──
+    if (fresh && id) {
+      const overlay = document.getElementById('success-overlay');
+      document.getElementById('success-id').textContent = id;
+      overlay.hidden = false;
+      haptic([30, 60, 30]);
+      setTimeout(() => { overlay.style.display = 'none'; }, 3200);
+    }
 
     if (!id) {
       idEl.textContent = '—';
@@ -66,10 +106,34 @@
       statusText.textContent = 'Open this page from a tracking link.';
     } else {
       idEl.textContent = id;
-      if (fresh) banner.textContent = 'Order placed 🎉';
       refresh();
       setInterval(refresh, 30000);
     }
+
+    const ICONS = {
+      NEW: '📦',
+      CONFIRMED: '✓',
+      PREPARING: '🔥',
+      OUT_FOR_DELIVERY: '🏍️',
+      COMPLETED: '✨',
+      CANCELLED: '✕',
+    };
+    const BANNERS = {
+      NEW: 'Order received',
+      CONFIRMED: 'Confirmed ✓',
+      PREPARING: 'Being prepared 🔥',
+      OUT_FOR_DELIVERY: 'On the way 🏍️',
+      COMPLETED: 'Delivered ✨',
+      CANCELLED: 'Cancelled',
+    };
+    const MESSAGES = {
+      NEW: 'Order received. We will confirm shortly.',
+      CONFIRMED: 'Confirmed. Vendor is being notified.',
+      PREPARING: 'Your gas is being prepared at our partner plant.',
+      OUT_FOR_DELIVERY: 'On the way. ETA ~30 mins.',
+      COMPLETED: 'Delivered. Thank you for using NaijaGaz!',
+      CANCELLED: 'This order was cancelled.',
+    };
 
     async function refresh() {
       try {
@@ -85,6 +149,14 @@
           li.classList.toggle('current', i === idx);
         });
 
+        // Status icon swap
+        emojiEl.textContent = ICONS[r.status] || '📦';
+        iconBox.className = 'status-icon';
+        if (r.status === 'PREPARING') iconBox.classList.add('is-preparing');
+        else if (r.status === 'OUT_FOR_DELIVERY') iconBox.classList.add('is-out');
+        else if (r.status === 'COMPLETED') iconBox.classList.add('is-completed');
+
+        // Rider info card during delivery
         if (r.status === 'OUT_FOR_DELIVERY' && r.rider_phone) {
           riderInfo.hidden = false;
           document.getElementById('rider-name').textContent = r.rider_name || 'rider';
@@ -95,26 +167,9 @@
           riderInfo.hidden = true;
         }
 
-        const messages = {
-          NEW: 'Order received. We will confirm shortly.',
-          CONFIRMED: 'Confirmed. Vendor is being notified.',
-          PREPARING: 'Your gas is being prepared at our partner plant.',
-          OUT_FOR_DELIVERY: 'On the way. ETA ~30 mins.',
-          COMPLETED: 'Delivered. Thank you for using NaijaGaz!',
-          CANCELLED: 'This order was cancelled.',
-        };
-        statusText.textContent = messages[r.status] || 'Working on it…';
-
-        // Banner reflects current state
-        const banners = {
-          NEW: 'Order received 🔥',
-          CONFIRMED: 'Confirmed ✓',
-          PREPARING: 'Being prepared 🔥',
-          OUT_FOR_DELIVERY: 'On the way 🏍️',
-          COMPLETED: 'Delivered ✨',
-        };
-        if (!fresh || r.status !== 'NEW') {
-          banner.textContent = banners[r.status] || 'Order';
+        statusText.textContent = MESSAGES[r.status] || 'Working on it…';
+        if (!(fresh && r.status === 'NEW')) {
+          banner.textContent = BANNERS[r.status] || 'Order';
         }
       } catch (err) {
         if (err.message === 'BROKER_NOT_CONFIGURED') {

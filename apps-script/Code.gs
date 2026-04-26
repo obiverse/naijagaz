@@ -26,7 +26,7 @@ const CYLINDERS = {
   '25':   { price: 32000, days: 40 },
 };
 
-const ALLOWED_DISTRICTS = ['lugbe', 'kubwa', 'nyanya'];
+const ALLOWED_DISTRICTS = ['lugbe', 'kubwa', 'nyanya', 'gwarinpa'];
 const ALLOWED_PAYMENTS  = ['cash', 'transfer', 'pos'];
 
 // ─── HTTP entry points ─────────────────────────────────────────────

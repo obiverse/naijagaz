@@ -98,7 +98,7 @@ pub fn validate_phone(raw: &str) -> String {
 /// Phase 0 districts only. Case-sensitive — JS lowercases before calling.
 #[wasm_bindgen]
 pub fn validate_district(d: &str) -> bool {
-    matches!(d, "lugbe" | "kubwa" | "nyanya")
+    matches!(d, "lugbe" | "kubwa" | "nyanya" | "gwarinpa")
 }
 
 #[wasm_bindgen]
@@ -179,6 +179,7 @@ mod tests {
         assert!(validate_district("lugbe"));
         assert!(validate_district("kubwa"));
         assert!(validate_district("nyanya"));
+        assert!(validate_district("gwarinpa"));
         assert!(!validate_district("wuse"));
         assert!(!validate_district("LUGBE"));
         assert!(!validate_district(""));
