@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reorder · NaijaGaz</title>
+  <meta name="theme-color" content="#0B3FE0">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="index.html" class="back" aria-label="Back">←</a>
+    <span class="step-label">Reorder</span>
+  </header>
+
+  <main class="container">
+    <h2>Welcome back 👋</h2>
+    <p class="muted" id="intro">Loading your last order…</p>
+
+    <div class="summary" id="last-summary" hidden></div>
+
+    <div id="actions" hidden>
+      <a class="btn btn-primary" href="order.html" id="reorder-btn">Place this order again</a>
+      <a class="btn btn-secondary" href="order.html" style="margin-top: 12px;">Change something</a>
+    </div>
+
+    <div id="empty" hidden>
+      <p class="lede">No previous order on this device. Let's start fresh.</p>
+      <a href="order.html" class="btn btn-primary">Order gas</a>
+    </div>
+  </main>
+
+  <script type="module">
+    import { ready, recallLast, naira, refillDays, saveDraft } from './shell.js';
+
+    await ready;
+
+    const last = recallLast();
+
+    if (!last || !last.order_id) {
+      document.getElementById('intro').hidden = true;
+      document.getElementById('empty').hidden = false;
+    } else {
+      document.getElementById('intro').textContent =
+        `Your last order was a ${last.size}kg cylinder.`;
+      document.getElementById('last-summary').innerHTML = `
+        <div class="summary-row"><span class="label">Cylinder</span><span class="value">${last.size}kg refill</span></div>
+        <div class="summary-row"><span class="label">Order</span><span class="value">${last.order_id}</span></div>
+      `;
+      document.getElementById('last-summary').hidden = false;
+      document.getElementById('actions').hidden = false;
+
+      // Pre-fill draft so order.html opens straight to step 2 with size pre-picked
+      document.getElementById('reorder-btn').addEventListener('click', () => {
+        saveDraft({ size: last.size, step: 2 });
+      });
+    }
+  </script>
+
+</body>
+</html>

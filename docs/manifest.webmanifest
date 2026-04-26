@@ -1,0 +1,34 @@
+{
+  "name": "NaijaGaz",
+  "short_name": "NaijaGaz",
+  "description": "Cooking gas in 90 minutes. Lugbe · Kubwa · Nyanya.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF7F0",
+  "theme_color": "#0B3FE0",
+  "lang": "en-NG",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Order gas",
+      "short_name": "Order",
+      "url": "./order.html",
+      "icons": [{ "src": "icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Reorder",
+      "short_name": "Reorder",
+      "url": "./again.html",
+      "icons": [{ "src": "icon.svg", "sizes": "any" }]
+    }
+  ]
+}

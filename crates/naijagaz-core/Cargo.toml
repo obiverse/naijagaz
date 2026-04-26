@@ -1,0 +1,18 @@
+[package]
+name = "naijagaz-core"
+version = "0.1.0"
+edition = "2021"
+description = "NaijaGaz business logic — pricing, validation, formatting (pure Rust → Wasm)"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "=0.2.114"
+
+[package.metadata.wasm-pack.profile.release]
+# Cached wasm-opt is older than the Wasm features modern rustc emits.
+# Re-enable once we install a recent binaryen (brew install binaryen)
+# and point wasm-pack at it, or upgrade wasm-pack itself.
+wasm-opt = false
