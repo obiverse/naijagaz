@@ -6,30 +6,41 @@
   <title>Order Gas · NaijaGaz</title>
   <meta name="theme-color" content="#0B3FE0">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
 </head>
 <body>
 
   <header class="topbar">
     <a href="index.html" class="back" aria-label="Back">←</a>
-    <span class="step-label">Step <span id="step-num">1</span> of 4</span>
+    <span class="step-label">Order</span>
   </header>
+
+  <div class="stepper" aria-hidden="true">
+    <span class="seg" data-seg="1"></span>
+    <span class="seg" data-seg="2"></span>
+    <span class="seg" data-seg="3"></span>
+    <span class="seg" data-seg="4"></span>
+  </div>
 
   <main class="container">
 
     <!-- ── Step 1: cylinder size ─────────────────── -->
     <section class="step" data-step="1">
       <h2>Pick a cylinder size</h2>
+      <p class="muted" style="margin-bottom: 24px;">Choose what fits your kitchen.</p>
       <div class="size-grid" id="size-grid"></div>
     </section>
 
     <!-- ── Step 2: address ─────────────────────────── -->
     <section class="step" data-step="2" hidden>
       <h2>Where to deliver?</h2>
+      <p class="muted" style="margin-bottom: 24px;">A clear address gets the rider to you faster.</p>
+
       <label class="field">
         <span>District</span>
         <select id="f-district" required>
@@ -56,10 +67,11 @@
     <!-- ── Step 3: phone + payment ─────────────────── -->
     <section class="step" data-step="3" hidden>
       <h2>How can we reach you?</h2>
+      <p class="muted" style="margin-bottom: 24px;">For SMS updates and the rider's call.</p>
+
       <label class="field" id="phone-field">
         <span>Phone number</span>
         <input id="f-phone" type="tel" inputmode="tel" placeholder="0801 234 5678" autocomplete="tel" required>
-        <small class="muted">For SMS updates and rider's call</small>
       </label>
       <label class="field">
         <span>Your name <small class="muted">(optional)</small></span>
@@ -86,12 +98,15 @@
     <!-- ── Step 4: confirm ─────────────────────────── -->
     <section class="step" data-step="4" hidden>
       <h2>Confirm your order</h2>
+      <p class="muted" style="margin-bottom: 20px;">Review, then place it.</p>
+
       <div class="summary" id="summary"></div>
+
       <div class="actions">
         <button class="btn btn-secondary" data-back>Back</button>
-        <button class="btn btn-primary" id="submit-btn">Place order</button>
+        <button class="btn btn-flame" id="submit-btn">Place order</button>
       </div>
-      <p id="submit-status" class="muted" style="margin-top:16px; text-align:center;"></p>
+      <p id="submit-status" class="status-text" style="margin-top: 16px;"></p>
     </section>
 
   </main>
@@ -110,7 +125,7 @@
       phone: '', name: '', payment: 'cash', step: 1,
     }, loadDraft());
 
-    // ── Render cylinder size cards ──
+    // ── Render cylinder size cards from Wasm catalog ──
     const grid = document.getElementById('size-grid');
     catalog().forEach(({ size, price: p, days }) => {
       const btn = document.createElement('button');
@@ -126,7 +141,7 @@
         state.size = size;
         document.querySelectorAll('.size-card').forEach(c => c.classList.toggle('selected', c.dataset.size === size));
         saveDraft(state);
-        setTimeout(() => goto(2), 180);
+        setTimeout(() => goto(2), 200);
       });
       grid.appendChild(btn);
     });
@@ -136,9 +151,17 @@
       state.step = n;
       saveDraft(state);
       document.querySelectorAll('.step').forEach(s => s.hidden = Number(s.dataset.step) !== n);
-      document.getElementById('step-num').textContent = String(n);
+      updateStepper(n);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (n === 4) renderSummary();
+    }
+
+    function updateStepper(n) {
+      document.querySelectorAll('.stepper .seg').forEach(seg => {
+        const i = Number(seg.dataset.seg);
+        seg.classList.toggle('done', i < n);
+        seg.classList.toggle('current', i === n);
+      });
     }
 
     document.querySelectorAll('[data-back]').forEach(b =>
@@ -172,63 +195,49 @@
 
     // ── Validation (Wasm-backed) ──
     function validateStep2() {
-      if (!districtOk(state.district)) {
-        flashError('f-district', 'Choose your district');
-        return false;
-      }
-      if (!state.address || state.address.trim().length < 5) {
-        flashError('f-address', 'A clear address helps the rider find you');
-        return false;
-      }
+      if (!districtOk(state.district)) return flashError('f-district', 'Choose your district');
+      if (!state.address || state.address.trim().length < 5)
+        return flashError('f-address', 'A clear address helps the rider find you');
       return true;
     }
-
     function validateStep3() {
       const normalized = phone(state.phone);
-      if (!normalized) {
-        flashError('f-phone', 'Enter a valid Nigerian phone, e.g. 0801 234 5678');
-        return false;
-      }
-      state.phone = normalized; // overwrite with E.164
+      if (!normalized) return flashError('f-phone', 'Enter a valid Nigerian phone, e.g. 0801 234 5678');
+      state.phone = normalized;
       $('f-phone').value = normalized;
       saveDraft(state);
-      if (!paymentOk(state.payment)) {
-        flashError(null, 'Pick a payment method');
-        return false;
-      }
+      if (!paymentOk(state.payment)) return flashError(null, 'Pick a payment method');
       return true;
     }
-
     function flashError(fieldId, msg) {
       if (fieldId) {
-        const f = document.getElementById(fieldId).closest('.field');
+        const f = $(fieldId).closest('.field');
         f.classList.add('error');
-        setTimeout(() => f.classList.remove('error'), 1500);
+        setTimeout(() => f.classList.remove('error'), 1800);
       }
-      const s = document.getElementById('submit-status');
+      const s = $('submit-status');
       s.textContent = msg;
       s.style.color = 'var(--warn)';
       setTimeout(() => { if (s.textContent === msg) s.textContent = ''; }, 3000);
+      return false;
     }
 
     // ── Confirm summary ──
     const districtLabel = { lugbe: 'Lugbe', kubwa: 'Kubwa', nyanya: 'Nyanya' };
-    const paymentLabel = { cash: 'Cash', transfer: 'Bank transfer', pos: 'POS' };
-
+    const paymentLabel  = { cash: 'Cash', transfer: 'Bank transfer', pos: 'POS' };
     function renderSummary() {
       const total = price(state.size);
       $('summary').innerHTML = `
         <div class="summary-row"><span class="label">Cylinder</span><span class="value">${state.size}kg refill</span></div>
         <div class="summary-row"><span class="label">District</span><span class="value">${districtLabel[state.district] || ''}</span></div>
-        <div class="summary-row"><span class="label">Address</span><span class="value">${escapeHtml(state.address)}${state.landmark ? '<br><small class="muted">' + escapeHtml(state.landmark) + '</small>' : ''}</span></div>
+        <div class="summary-row"><span class="label">Address</span><span class="value">${esc(state.address)}${state.landmark ? '<br><small class="muted">' + esc(state.landmark) + '</small>' : ''}</span></div>
         <div class="summary-row"><span class="label">Phone</span><span class="value">${state.phone}</span></div>
-        ${state.name ? `<div class="summary-row"><span class="label">Name</span><span class="value">${escapeHtml(state.name)}</span></div>` : ''}
+        ${state.name ? `<div class="summary-row"><span class="label">Name</span><span class="value">${esc(state.name)}</span></div>` : ''}
         <div class="summary-row"><span class="label">Payment</span><span class="value">${paymentLabel[state.payment]} on delivery</span></div>
-        <div class="summary-total"><span>Total</span><span>${naira(total)}</span></div>
+        <div class="summary-total"><span>Total</span><span class="price-flame">${naira(total)}</span></div>
       `;
     }
-
-    function escapeHtml(s) {
+    function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
@@ -237,17 +246,13 @@
       const btn = $('submit-btn');
       const status = $('submit-status');
       btn.disabled = true;
-      status.style.color = 'var(--muted)';
+      status.style.color = 'var(--ink-500)';
       status.innerHTML = '<span class="spinner"></span> Sending order…';
 
       const payload = {
-        size: state.size,
-        district: state.district,
-        address: state.address,
-        landmark: state.landmark,
-        phone: state.phone,
-        name: state.name,
-        payment: state.payment,
+        size: state.size, district: state.district,
+        address: state.address, landmark: state.landmark,
+        phone: state.phone, name: state.name, payment: state.payment,
       };
 
       try {
@@ -272,6 +277,7 @@
 
     // ── Boot to last step ──
     if (state.size && state.step > 1) goto(state.step);
+    else updateStepper(state.step || 1);
   </script>
 
 </body>

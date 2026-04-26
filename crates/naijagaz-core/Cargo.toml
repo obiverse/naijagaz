@@ -12,7 +12,5 @@ crate-type = ["cdylib", "rlib"]
 wasm-bindgen = "=0.2.114"
 
 [package.metadata.wasm-pack.profile.release]
-# Cached wasm-opt is older than the Wasm features modern rustc emits.
-# Re-enable once we install a recent binaryen (brew install binaryen)
-# and point wasm-pack at it, or upgrade wasm-pack itself.
-wasm-opt = false
+# wasm-opt = -O3 (system binaryen via Homebrew). Strips ~50% size.
+wasm-opt = ["-O3", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]

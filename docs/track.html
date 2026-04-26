@@ -6,10 +6,11 @@
   <title>Track Order · NaijaGaz</title>
   <meta name="theme-color" content="#0B3FE0">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Ubuntu:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
 </head>
 <body>
@@ -20,10 +21,11 @@
   </header>
 
   <main class="container">
-    <h2 id="banner">Order received 🔥</h2>
 
     <div class="status-card">
+      <div class="status-banner" id="banner">Order received 🔥</div>
       <div class="status-id" id="order-id">—</div>
+
       <ol class="timeline" id="timeline">
         <li data-status="NEW">Received</li>
         <li data-status="CONFIRMED">Confirmed</li>
@@ -37,10 +39,10 @@
         <a id="rider-phone-btn" class="btn btn-ember" href="#">Call rider</a>
       </div>
 
-      <p id="status-text" class="muted" style="text-align:center; margin: 16px 0 0;">Loading…</p>
+      <p id="status-text" class="status-text">Loading…</p>
     </div>
 
-    <div style="text-align:center; margin-top: 24px;">
+    <div style="text-align:center;">
       <a href="index.html" class="btn-link">← Back to home</a>
     </div>
   </main>
@@ -59,7 +61,8 @@
     const riderInfo = document.getElementById('rider-info');
 
     if (!id) {
-      idEl.textContent = 'No order ID provided';
+      idEl.textContent = '—';
+      banner.textContent = 'No order ID';
       statusText.textContent = 'Open this page from a tracking link.';
     } else {
       idEl.textContent = id;
@@ -92,14 +95,27 @@
           riderInfo.hidden = true;
         }
 
-        statusText.textContent = ({
+        const messages = {
           NEW: 'Order received. We will confirm shortly.',
           CONFIRMED: 'Confirmed. Vendor is being notified.',
           PREPARING: 'Your gas is being prepared at our partner plant.',
           OUT_FOR_DELIVERY: 'On the way. ETA ~30 mins.',
           COMPLETED: 'Delivered. Thank you for using NaijaGaz!',
           CANCELLED: 'This order was cancelled.',
-        })[r.status] || 'Working on it…';
+        };
+        statusText.textContent = messages[r.status] || 'Working on it…';
+
+        // Banner reflects current state
+        const banners = {
+          NEW: 'Order received 🔥',
+          CONFIRMED: 'Confirmed ✓',
+          PREPARING: 'Being prepared 🔥',
+          OUT_FOR_DELIVERY: 'On the way 🏍️',
+          COMPLETED: 'Delivered ✨',
+        };
+        if (!fresh || r.status !== 'NEW') {
+          banner.textContent = banners[r.status] || 'Order';
+        }
       } catch (err) {
         if (err.message === 'BROKER_NOT_CONFIGURED') {
           statusText.textContent = 'Tracking broker not configured yet (dev mode).';

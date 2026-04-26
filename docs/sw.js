@@ -3,7 +3,7 @@
 // No precache list. No version tokens beyond the cache name. Build script
 // rewrites the cache name on each release to bust stale assets.
 
-const CACHE = 'ng-202604261439';
+const CACHE = 'ng-9e9adba';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

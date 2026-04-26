@@ -7,68 +7,99 @@
   <meta name="description" content="Order cooking gas. Pay on delivery. Lugbe · Kubwa · Nyanya.">
   <meta name="theme-color" content="#0B3FE0">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta property="og:title" content="NaijaGaz — Cooking gas in 90 minutes">
+  <meta property="og:description" content="Tap, confirm, pay on delivery. No queues.">
+  <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
 </head>
 <body>
 
+<div class="hero-wrap">
+
   <main class="hero">
-    <img src="logo.svg" alt="NaijaGaz" class="hero-logo" width="240" height="360">
-    <h1>Cooking gas in 90 minutes.</h1>
+
+    <div class="hero-mark" aria-hidden="true">
+      <!-- Orbital nine — slow rotation, sacred geometry alive -->
+      <svg class="orbit" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <g>
+          <circle cx="100"   cy="10"     r="3.5"/>
+          <circle cx="157.85" cy="31.06"  r="3.5"/>
+          <circle cx="188.63" cy="84.37"  r="3.5"/>
+          <circle cx="177.94" cy="145"    r="3.5"/>
+          <circle cx="130.78" cy="184.57" r="3.5"/>
+          <circle cx="69.22"  cy="184.57" r="3.5"/>
+          <circle cx="22.06"  cy="145"    r="3.5"/>
+          <circle cx="11.37"  cy="84.37"  r="3.5"/>
+          <circle cx="42.15"  cy="31.06"  r="3.5"/>
+        </g>
+      </svg>
+      <img src="icon.svg" alt="NaijaGaz" class="mark-img" width="130" height="130">
+    </div>
+
+    <h1>Cooking gas<br>in 90 minutes.</h1>
     <p class="lede">Tap, confirm, pay on delivery. No queues. No guessing prices.</p>
 
-    <a href="order.html" class="btn btn-primary">Order gas</a>
-    <a href="again.html" class="btn-link" id="reorder-link" hidden>Reorder your last cylinder →</a>
-    <a href="#" class="btn-link" id="track-link">Track an order</a>
+    <div class="hero-actions">
+      <a href="order.html" class="btn btn-flame">Order gas</a>
+      <a href="again.html" class="btn-link" id="reorder-link" hidden>↻ Reorder your last cylinder</a>
+      <br>
+      <a href="#" class="btn-link" id="track-link">Track an order →</a>
+    </div>
+
   </main>
 
   <footer class="footer">
-    <p><strong>Lugbe · Kubwa · Nyanya</strong></p>
-    <p class="muted">WhatsApp +234 801 NAIJA GAZ</p>
+    <p class="footer-districts">LUGBE · KUBWA · NYANYA</p>
+    <p>WhatsApp +234 801 NAIJA GAZ</p>
   </footer>
 
-  <div class="install-banner" id="install-banner" hidden>
-    <p>Install NaijaGaz for faster reorders</p>
-    <button id="install-btn">Install</button>
-    <button class="dismiss" id="install-dismiss" aria-label="Dismiss">×</button>
-  </div>
+</div>
 
-  <script type="module">
-    import { ready, recallLast, isInstallable, promptInstall } from './shell.js';
+<div class="install-banner" id="install-banner" hidden>
+  <p>Install NaijaGaz for faster reorders</p>
+  <button id="install-btn">Install</button>
+  <button class="dismiss" id="install-dismiss" aria-label="Dismiss">×</button>
+</div>
 
-    await ready;
+<script type="module">
+  import { ready, recallLast, promptInstall } from './shell.js';
 
-    // Reorder link if there's a remembered last order
-    const last = recallLast();
-    if (last && last.order_id) {
-      document.getElementById('reorder-link').hidden = false;
-    }
+  await ready;
 
-    // Track-an-order prompt
-    document.getElementById('track-link').addEventListener('click', (e) => {
-      e.preventDefault();
-      const id = prompt('Order ID (e.g. NG-20260426-0001):');
-      if (id) location.href = 'track.html?id=' + encodeURIComponent(id.trim());
-    });
+  // Reorder shortcut visibility
+  const last = recallLast();
+  if (last && last.order_id) {
+    document.getElementById('reorder-link').hidden = false;
+  }
 
-    // Install banner
-    const banner = document.getElementById('install-banner');
-    document.addEventListener('naijagaz:installable', () => { banner.hidden = false; });
-    document.getElementById('install-btn').addEventListener('click', async () => {
-      await promptInstall();
-      banner.hidden = true;
-    });
-    document.getElementById('install-dismiss').addEventListener('click', () => {
-      banner.hidden = true;
-      sessionStorage.setItem('install_dismissed', '1');
-    });
-    if (sessionStorage.getItem('install_dismissed')) banner.hidden = true;
-  </script>
+  // Track-an-order via prompt
+  document.getElementById('track-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    const id = prompt('Order ID (e.g. NG-20260426-0001):');
+    if (id) location.href = 'track.html?id=' + encodeURIComponent(id.trim());
+  });
+
+  // Install banner — only show if dismissed flag isn't set this session
+  const banner = document.getElementById('install-banner');
+  document.addEventListener('naijagaz:installable', () => {
+    if (!sessionStorage.getItem('install_dismissed')) banner.hidden = false;
+  });
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    await promptInstall();
+    banner.hidden = true;
+  });
+  document.getElementById('install-dismiss').addEventListener('click', () => {
+    banner.hidden = true;
+    sessionStorage.setItem('install_dismissed', '1');
+  });
+</script>
 
 </body>
 </html>
