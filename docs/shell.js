@@ -143,32 +143,310 @@ export async function fetchOrder(orderId) {
   return res.json();
 }
 
-// ── Service worker registration ───────────────────
+// ── Service worker registration + update detection ──────────
+//
+// When a new SW is installed and waiting, surface a small toast with
+// a "Refresh" button. Tap activates skipWaiting on the new SW and
+// reloads. This is the flagship-PWA update flow — users always have
+// the latest version with one tap, never silently stale, never forced.
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js');
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateToast(sw);
+          }
+        });
+      });
+      // Reload once when the new SW takes control
+      let refreshed = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshed) return;
+        refreshed = true;
+        location.reload();
+      });
+    } catch {}
   });
 }
 
-// ── Install prompt (PWA) ──────────────────────────
+function showUpdateToast(waitingSw) {
+  if (document.getElementById('update-toast')) return;
+  const el = document.createElement('div');
+  el.id = 'update-toast';
+  el.className = 'update-toast';
+  el.innerHTML = `<span>New version available</span><button type="button">Refresh</button>`;
+  el.querySelector('button').addEventListener('click', () => {
+    haptic(10);
+    el.classList.add('dismissing');
+    waitingSw.postMessage({ type: 'SKIP_WAITING' });
+  });
+  document.body.appendChild(el);
+  // Auto-dismiss after 12s if the user ignores it
+  setTimeout(() => {
+    if (document.body.contains(el)) {
+      el.classList.add('dismissing');
+      setTimeout(() => el.remove(), 300);
+    }
+  }, 12_000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INSTALL — multi-platform PWA install orchestration
+//
+//   - beforeinstallprompt → captured for Chrome/Edge/Android
+//   - iOS Safari → no API, we render step-by-step instructions
+//   - Desktop browsers without API → fallback to address-bar guidance
+//   - Already installed → display-mode: standalone hides everything
+//
+// Engagement-gated: never auto-shown on first visit. Surfaces only after
+// 2+ visits, an order placed, or 60s+ dwell. Dismissal persists for 14
+// days in localStorage. Multiple entry points — auto + manual.
+// ═══════════════════════════════════════════════════════════════════
+
+const INSTALL_DISMISSED_KEY = 'naijagaz.install.dismissed_at';
+const ENGAGEMENT_KEY = 'naijagaz.engagement.v1';
+const FIRST_INSTALLED_KEY = 'naijagaz.first_installed_at';
+const SESSION_SHOWN_KEY = 'naijagaz.install.shown_session';
+const DISMISSAL_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000;
+const ENGAGEMENT_VISIT_GATE = 2;
+const ENGAGEMENT_DWELL_MS = 60_000;
 
 let _deferredPrompt = null;
+
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   _deferredPrompt = e;
   document.dispatchEvent(new CustomEvent('naijagaz:installable'));
 });
 
+window.addEventListener('appinstalled', () => {
+  _deferredPrompt = null;
+  toast('Installed ✓ — open from your home screen');
+  haptic([20, 60, 20]);
+});
+
+// ── Detection ──
+
+export function isInstalled() {
+  return matchMedia('(display-mode: standalone)').matches ||
+         matchMedia('(display-mode: minimal-ui)').matches ||
+         matchMedia('(display-mode: fullscreen)').matches ||
+         navigator.standalone === true; // iOS Safari
+}
+
+export function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window);
+}
+
+export function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
+}
+
+export function isInstallable() {
+  return _deferredPrompt !== null;
+}
+
+// ── Engagement ──
+
+function loadEngagement() {
+  try { return JSON.parse(localStorage.getItem(ENGAGEMENT_KEY) || '{}'); } catch { return {}; }
+}
+function saveEngagement(e) {
+  try { localStorage.setItem(ENGAGEMENT_KEY, JSON.stringify(e)); } catch {}
+}
+
+export function trackEngagement(event = 'visit') {
+  const e = loadEngagement();
+  e.firstVisit ??= Date.now();
+  if (event === 'visit') e.visits = (e.visits || 0) + 1;
+  if (event === 'order') e.orders = (e.orders || 0) + 1;
+  e.lastSeen = Date.now();
+  saveEngagement(e);
+}
+
+function engagementMet() {
+  const e = loadEngagement();
+  return (e.orders || 0) >= 1
+      || (e.visits || 0) >= ENGAGEMENT_VISIT_GATE
+      || (e.firstVisit && Date.now() - e.firstVisit > ENGAGEMENT_DWELL_MS);
+}
+
+// ── Dismissal ──
+
+export function dismissInstallPrompt() {
+  try { localStorage.setItem(INSTALL_DISMISSED_KEY, String(Date.now())); } catch {}
+}
+function isDismissalActive() {
+  const at = Number(localStorage.getItem(INSTALL_DISMISSED_KEY) || '0');
+  return at > 0 && Date.now() - at < DISMISSAL_COOLDOWN_MS;
+}
+
+export function shouldAutoShowInstall() {
+  if (isInstalled()) return false;
+  if (sessionStorage.getItem(SESSION_SHOWN_KEY)) return false;
+  if (isDismissalActive()) return false;
+  if (!engagementMet()) return false;
+  // iOS users can't auto-install — only show if they explicitly tap the link.
+  if (isIOS() && !isInstallable()) return false;
+  return isInstallable() || isIOS();
+}
+
+// ── Install trigger ──
+
 export async function promptInstall() {
-  if (!_deferredPrompt) return false;
+  if (!_deferredPrompt) return { outcome: 'unsupported' };
   _deferredPrompt.prompt();
   const choice = await _deferredPrompt.userChoice;
   _deferredPrompt = null;
-  return choice.outcome === 'accepted';
+  return choice;
 }
 
-export function isInstallable() { return _deferredPrompt !== null; }
+// ── Install sheet (auto-injected) ──
+
+const SHARE_ICON_SVG = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"/></svg>`;
+const ADD_ICON_SVG   = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>`;
+
+function injectInstallSheet() {
+  if (document.getElementById('install-sheet')) return;
+  const sheet = document.createElement('div');
+  sheet.id = 'install-sheet';
+  sheet.className = 'sheet-backdrop install-sheet-backdrop';
+  sheet.hidden = true;
+  sheet.setAttribute('role', 'dialog');
+  sheet.setAttribute('aria-modal', 'true');
+  sheet.setAttribute('aria-labelledby', 'install-name');
+  sheet.innerHTML = `
+    <div class="install-sheet">
+      <button class="install-close" id="install-close" aria-label="Close" type="button">×</button>
+      <div class="sheet-handle" aria-hidden="true"></div>
+
+      <div class="install-header">
+        <img src="icon-192.png" alt="" class="install-icon" width="64" height="64">
+        <div>
+          <h3 class="install-name" id="install-name">NaijaGaz</h3>
+          <p class="install-host">obiverse.github.io · PWA</p>
+        </div>
+      </div>
+
+      <!-- Chrome/Edge/Android (beforeinstallprompt) -->
+      <div class="install-body" id="install-body-supported" hidden>
+        <p class="install-pitch">Add NaijaGaz to your home screen — same as a native app, no Play Store needed.</p>
+        <ul class="install-perks">
+          <li><span>🔥</span> One-tap reorders</li>
+          <li><span>📡</span> Works offline</li>
+          <li><span>🔔</span> Refill reminders, every 21 days</li>
+        </ul>
+        <button class="btn btn-flame" id="install-trigger" type="button">Install NaijaGaz</button>
+      </div>
+
+      <!-- iOS Safari -->
+      <div class="install-body" id="install-body-ios" hidden>
+        <p class="install-pitch">Two taps to add NaijaGaz to your home screen:</p>
+        <ol class="install-steps">
+          <li><span class="step-n">1</span><span>Tap the <strong>Share</strong> button ${SHARE_ICON_SVG} at the bottom of Safari</span></li>
+          <li><span class="step-n">2</span><span>Scroll down and tap <strong>Add to Home Screen</strong> ${ADD_ICON_SVG}</span></li>
+          <li><span class="step-n">3</span><span>Tap <strong>Add</strong> in the top-right corner</span></li>
+        </ol>
+      </div>
+
+      <!-- Desktop browsers without beforeinstallprompt API -->
+      <div class="install-body" id="install-body-desktop" hidden>
+        <p class="install-pitch">Look for an <strong>install icon</strong> in your address bar — usually a small monitor or ⊕ glyph next to the URL. Click it to install NaijaGaz like a native app.</p>
+        <p class="muted" style="font-size: var(--fs-caption);">Chrome and Edge support this. Other browsers can bookmark the page for one-tap access.</p>
+      </div>
+
+      <!-- Already installed -->
+      <div class="install-body" id="install-body-done" hidden>
+        <p class="install-pitch" style="text-align: center; font-size: var(--fs-body-lg);">✓ NaijaGaz is installed on this device.</p>
+        <p class="muted" style="text-align: center;">Open it from your home screen anytime. Works offline.</p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+
+  document.getElementById('install-close').addEventListener('click', closeInstallSheet);
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) closeInstallSheet(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !sheet.hidden) closeInstallSheet();
+  });
+
+  document.getElementById('install-trigger').addEventListener('click', async () => {
+    haptic(8);
+    const r = await promptInstall();
+    if (r.outcome === 'accepted') {
+      closeInstallSheet();  // appinstalled fires the toast
+    } else if (r.outcome === 'dismissed') {
+      dismissInstallPrompt();
+      closeInstallSheet();
+      toast('We will not bug you for 14 days');
+    }
+  });
+}
+
+export function openInstallSheet() {
+  injectInstallSheet();
+  ['supported', 'ios', 'desktop', 'done'].forEach(k => {
+    const el = document.getElementById('install-body-' + k);
+    if (el) el.hidden = true;
+  });
+
+  let bodyKey;
+  if (isInstalled()) bodyKey = 'done';
+  else if (isInstallable()) bodyKey = 'supported';
+  else if (isIOS()) bodyKey = 'ios';
+  else bodyKey = 'desktop';
+
+  const body = document.getElementById('install-body-' + bodyKey);
+  if (body) body.hidden = false;
+
+  document.getElementById('install-sheet').hidden = false;
+  haptic(6);
+}
+
+function closeInstallSheet() {
+  const sheet = document.getElementById('install-sheet');
+  if (!sheet || sheet.hidden) return;
+  sheet.classList.add('closing');
+  setTimeout(() => {
+    sheet.hidden = true;
+    sheet.classList.remove('closing');
+  }, 300);
+}
+
+// ── Auto-show after engagement (once per session, on idle) ──
+
+function maybeAutoShow() {
+  if (!shouldAutoShowInstall()) return;
+  try { sessionStorage.setItem(SESSION_SHOWN_KEY, '1'); } catch {}
+  // Wait until the page is settled — don't fight a hero animation
+  setTimeout(openInstallSheet, 1500);
+}
+
+// Wire any [data-install] element to open the sheet
+function wireInstallButtons() {
+  document.querySelectorAll('[data-install]').forEach(el => {
+    if (el._installWired) return;
+    el._installWired = true;
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      openInstallSheet();
+    });
+  });
+}
+
+// Track this visit for engagement
+trackEngagement('visit');
+
+// First launch as installed — welcome moment
+if (isInstalled() && !localStorage.getItem(FIRST_INSTALLED_KEY)) {
+  try { localStorage.setItem(FIRST_INSTALLED_KEY, String(Date.now())); } catch {}
+  setTimeout(() => toast('Welcome to NaijaGaz 🔥 — installed on this device'), 800);
+}
 
 // ── Online/offline awareness ──────────────────────
 
@@ -295,6 +573,16 @@ export function toast(msg, ms = 2200) {
 function bootWidgets() {
   injectThemeToggle();
   injectConnectivityPip();
+  injectInstallSheet();
+  wireInstallButtons();
+  // Poll once for late-mounted [data-install] buttons
+  setTimeout(wireInstallButtons, 1000);
+  // Engagement-gated auto-show, deferred so it doesn't compete with hero
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(maybeAutoShow, { timeout: 3000 });
+  } else {
+    setTimeout(maybeAutoShow, 2200);
+  }
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', bootWidgets);

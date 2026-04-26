@@ -66,7 +66,10 @@
 
   <footer class="footer">
     <p class="footer-districts">LUGBE · KUBWA · NYANYA · GWARINPA</p>
-    <p>WhatsApp +234 801 NAIJA GAZ</p>
+    <p>WhatsApp +234 814 965 3044</p>
+    <p style="margin-top: 12px;">
+      <a href="#" data-install class="btn-link" style="font-size: var(--fs-caption); padding: 6px 10px;">📱 Install app</a>
+    </p>
   </footer>
 
 </div>
@@ -87,15 +90,8 @@
   </div>
 </div>
 
-<!-- ── Install banner ─────────────────────────────── -->
-<div class="install-banner" id="install-banner" hidden>
-  <p>Install NaijaGaz for faster reorders</p>
-  <button id="install-btn">Install</button>
-  <button class="dismiss" id="install-dismiss" aria-label="Dismiss">×</button>
-</div>
-
 <script type="module">
-  import { ready, recallLast, promptInstall, haptic, primaryOperator } from './shell.js';
+  import { ready, recallLast, haptic, primaryOperator } from './shell.js';
   import { WHATSAPP_ORDER_TEMPLATE } from './config.js';
 
   await ready;
@@ -147,20 +143,6 @@
   }
   document.getElementById('track-go').addEventListener('click', go);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-
-  // ── Install banner ──
-  const banner = document.getElementById('install-banner');
-  document.addEventListener('naijagaz:installable', () => {
-    if (!sessionStorage.getItem('install_dismissed')) banner.hidden = false;
-  });
-  document.getElementById('install-btn').addEventListener('click', async () => {
-    await promptInstall();
-    banner.hidden = true;
-  });
-  document.getElementById('install-dismiss').addEventListener('click', () => {
-    banner.hidden = true;
-    sessionStorage.setItem('install_dismissed', '1');
-  });
 </script>
 
 </body>

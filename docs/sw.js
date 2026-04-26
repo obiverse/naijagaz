@@ -3,10 +3,17 @@
 // No precache list. No version tokens beyond the cache name. Build script
 // rewrites the cache name on each release to bust stale assets.
 
-const CACHE = 'ng-1b4feab';
+const CACHE = 'ng-c62ee70';
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  // Don't auto-skip — wait for explicit SKIP_WAITING from the page so
+  // the user is in control of the update moment via the update toast.
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {

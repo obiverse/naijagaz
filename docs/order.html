@@ -134,6 +134,17 @@
       <p class="success-id" id="success-summary">—</p>
       <p class="success-sub">Send to both operators so the first available picks it up.</p>
       <div id="op-cta-stack" style="display: grid; gap: 12px; margin-top: 28px;"></div>
+
+      <!-- Install card — appears once when installable + not yet installed/dismissed -->
+      <div class="install-card" id="install-card-success" hidden>
+        <span class="install-card-icon">📱</span>
+        <div class="install-card-body">
+          <p>Install NaijaGaz</p>
+          <small>One-tap reorders next time</small>
+        </div>
+        <button data-install type="button">Install</button>
+      </div>
+
       <a href="index.html" class="btn-link" style="display:block; text-align:center; margin-top: 14px;">← Back to home</a>
     </section>
 
@@ -144,7 +155,8 @@
       ready, catalog, naira, phone, price, districtOk, paymentOk,
       saveDraft, loadDraft, clearDraft, rememberLast, submitOrder, isOnline, haptic,
       ORDER_MODE, composeWhatsAppOrderUrl, composeAllOperatorUrls,
-      primaryOperator, WHATSAPP_GROUP_INVITE
+      primaryOperator, WHATSAPP_GROUP_INVITE,
+      isInstalled, isInstallable, isIOS, trackEngagement
     } from './shell.js';
 
     await ready;
@@ -318,11 +330,18 @@
         const localId = 'WA-' + Date.now().toString(36).toUpperCase();
         rememberLast({ order_id: localId, size: state.size, mode: 'whatsapp' });
         clearDraft();
+        trackEngagement('order');
         haptic([30, 60, 30]);
 
         // Render a CTA per operator + optional group invite
         $('success-summary').textContent =
           `${state.size}kg · ${naira(price(state.size))} · ${districtLabel[state.district] || ''}`;
+
+        // Show install card if installable + not installed
+        const card = document.getElementById('install-card-success');
+        if (card && !isInstalled() && (isInstallable() || isIOS())) {
+          card.hidden = false;
+        }
 
         const stack = $('op-cta-stack');
         stack.innerHTML = '';
