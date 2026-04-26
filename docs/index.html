@@ -95,14 +95,15 @@
 </div>
 
 <script type="module">
-  import { ready, recallLast, promptInstall, haptic, pickWhatsAppOperator } from './shell.js';
+  import { ready, recallLast, promptInstall, haptic, primaryOperator } from './shell.js';
   import { WHATSAPP_ORDER_TEMPLATE } from './config.js';
 
   await ready;
 
-  // Round-robin pick: this page's "Order on WhatsApp" CTA hits whichever
-  // operator is next in rotation. Both NG and US lines see roughly equal load.
-  const op = pickWhatsAppOperator();
+  // Landing page CTA hits the primary operator (NG line). The full
+  // multi-operator dispatch happens on the order/success step where each
+  // operator has its own button.
+  const op = primaryOperator();
   document.getElementById('whatsapp-link').href =
     `https://wa.me/${op.number}?text=${encodeURIComponent(WHATSAPP_ORDER_TEMPLATE)}`;
   document.getElementById('whatsapp-link').addEventListener('click', () => haptic(12));

@@ -4,25 +4,24 @@
 // ═══════════════════════════════════════════════
 
 import init, * as core from './pkg/naijagaz_core/naijagaz_core.js';
-import { BROKER_URL, ORDER_MODE, WHATSAPP_NUMBER, WHATSAPP_OPERATORS } from './config.js';
+import { BROKER_URL, ORDER_MODE, WHATSAPP_NUMBER, WHATSAPP_OPERATORS, WHATSAPP_GROUP_INVITE } from './config.js';
 
-export { ORDER_MODE, WHATSAPP_OPERATORS };
+export { ORDER_MODE, WHATSAPP_OPERATORS, WHATSAPP_GROUP_INVITE };
 
-// ── Round-robin operator picker ───────────────────────────
-// Each call returns the next operator in the rotation. Persisted in
-// localStorage so the rotation survives reloads. Returns the full
-// operator object: { number, label, display }.
-export function pickWhatsAppOperator() {
-  if (WHATSAPP_OPERATORS.length === 1) return WHATSAPP_OPERATORS[0];
-  const key = 'naijagaz.op_counter.v1';
-  const i = (Number(localStorage.getItem(key) || '0') + 1) % WHATSAPP_OPERATORS.length;
-  try { localStorage.setItem(key, String(i)); } catch {}
-  return WHATSAPP_OPERATORS[i];
+// ── Operator selection ────────────────────────────────────
+// Every order goes to ALL operator lines — primary opens automatically,
+// secondaries are presented as equally prominent CTAs on success.
+//
+// `primaryOperator()` is the auto-opened line; `secondaryOperators()`
+// is the rest of the array.
+
+export function primaryOperator() {
+  return WHATSAPP_OPERATORS.find(o => o.primary) || WHATSAPP_OPERATORS[0];
 }
 
-// Return the operator that's NOT the given one (for the "alternate line" button).
-export function alternateOperator(currentNumber) {
-  return WHATSAPP_OPERATORS.find(o => o.number !== currentNumber) || WHATSAPP_OPERATORS[0];
+export function secondaryOperators() {
+  const primary = primaryOperator();
+  return WHATSAPP_OPERATORS.filter(o => o.number !== primary.number);
 }
 
 // ── Wasm boot ─────────────────────────────────────
@@ -91,16 +90,12 @@ export async function submitOrder(payload) {
 // this is a pure URL builder — no DOM side effects.
 //
 // Pass an explicit `operatorNumber` to target a specific line, otherwise
-// the call uses the round-robin pick. Returns { url, operator }.
+// the call defaults to the primary. Returns { url, operator }.
 //
 const DISTRICT_LABEL = { lugbe: 'Lugbe', kubwa: 'Kubwa', nyanya: 'Nyanya', gwarinpa: 'Gwarinpa' };
 const PAYMENT_LABEL  = { cash: 'Cash', transfer: 'Bank transfer', pos: 'POS' };
 
-export function composeWhatsAppOrderUrl(p, operatorNumber = null) {
-  const operator = operatorNumber
-    ? (WHATSAPP_OPERATORS.find(o => o.number === operatorNumber) || pickWhatsAppOperator())
-    : pickWhatsAppOperator();
-
+export function composeWhatsAppOrderText(p) {
   const total = price(p.size);
   const lines = [
     '🔥 NaijaGaz Order',
@@ -115,9 +110,27 @@ export function composeWhatsAppOrderUrl(p, operatorNumber = null) {
   lines.push(`Payment: ${PAYMENT_LABEL[p.payment] || p.payment} on delivery`);
   lines.push('');
   lines.push(`Total: ${naira(total)}`);
+  return lines.join('\n');
+}
 
-  const url = `https://wa.me/${operator.number}?text=${encodeURIComponent(lines.join('\n'))}`;
+export function composeWhatsAppOrderUrl(p, operatorNumber = null) {
+  const operator = operatorNumber
+    ? (WHATSAPP_OPERATORS.find(o => o.number === operatorNumber) || primaryOperator())
+    : primaryOperator();
+  const text = composeWhatsAppOrderText(p);
+  const url = `https://wa.me/${operator.number}?text=${encodeURIComponent(text)}`;
   return { url, operator };
+}
+
+// Build URLs for every operator in the configured list — used to render
+// the "send to each line" CTAs on the success step.
+export function composeAllOperatorUrls(p) {
+  const text = composeWhatsAppOrderText(p);
+  const enc = encodeURIComponent(text);
+  return WHATSAPP_OPERATORS.map(op => ({
+    operator: op,
+    url: `https://wa.me/${op.number}?text=${enc}`,
+  }));
 }
 
 export async function fetchOrder(orderId) {

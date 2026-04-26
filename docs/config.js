@@ -20,18 +20,25 @@ export const ORDER_MODE = 'whatsapp';
 // See apps-script/README.md for setup.
 export const BROKER_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 
-// WhatsApp operator lines — orders are round-robin'd across all entries.
-// Both numbers receive roughly equal share; customer can also tap an
-// "alternate line" link on the success step to reach the other operator.
+// WhatsApp operator lines — every order is sent to ALL non-primary
+// operators as well, so both NG and US lines see every order. The
+// primary line opens automatically; the others appear as equally
+// prominent CTAs on the success step.
 //
 // Format: E.164 without the leading '+' for wa.me links.
 export const WHATSAPP_OPERATORS = [
-  { number: '2348149653044', label: 'NG line', display: '+234 814 965 3044' },
-  { number: '12409750431',   label: 'US line', display: '+1 240 975 0431'   },
+  { number: '2348149653044', label: 'NG line', display: '+234 814 965 3044', primary: true  },
+  { number: '12409759431',   label: 'US line', display: '+1 240 975 9431',   primary: false },
 ];
 
-// Backward-compat alias — the primary (first) line.
-export const WHATSAPP_NUMBER = WHATSAPP_OPERATORS[0].number;
+// Optional: when set to a chat.whatsapp.com/<code> URL (after you create a
+// shared group with all operators in it), "Place order" routes there
+// instead of opening individual operator chats. Customer joins the group
+// once and posts orders; both operators see them in real time.
+export const WHATSAPP_GROUP_INVITE = '';
+
+// Backward-compat alias — the primary line.
+export const WHATSAPP_NUMBER = WHATSAPP_OPERATORS.find(o => o.primary)?.number || WHATSAPP_OPERATORS[0].number;
 export const SUPPORT_WHATSAPP = '+' + WHATSAPP_NUMBER;
 
 // Prefilled blank template for the landing-page "Order on WhatsApp" link.

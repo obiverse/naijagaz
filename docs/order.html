@@ -132,17 +132,9 @@
       </div>
       <h2 class="success-title" style="margin-bottom: 14px;" id="success-headline">Order sent 🔥</h2>
       <p class="success-id" id="success-summary">—</p>
-      <p class="success-sub" id="success-explainer">Send the prefilled message in WhatsApp to confirm. We'll reply with your tracking ID.</p>
-      <div class="actions" style="grid-template-columns: 1fr; margin-top: 28px;">
-        <a class="btn btn-flame" id="reopen-wa" href="#" target="_blank" rel="noopener">Open WhatsApp again</a>
-      </div>
-      <p style="text-align:center; margin-top: 14px; font-size: var(--fs-body-sm); color: var(--ink-500);">
-        Routed to <strong id="op-label">—</strong>.
-        <a class="btn-link" id="alt-op-link" href="#" target="_blank" rel="noopener" style="margin: 0; padding: 4px 8px;">
-          Send to <span id="alt-op-label">other line</span> instead →
-        </a>
-      </p>
-      <a href="index.html" class="btn-link" style="display:block; text-align:center; margin-top: 8px;">← Back to home</a>
+      <p class="success-sub">Send to both operators so the first available picks it up.</p>
+      <div id="op-cta-stack" style="display: grid; gap: 12px; margin-top: 28px;"></div>
+      <a href="index.html" class="btn-link" style="display:block; text-align:center; margin-top: 14px;">← Back to home</a>
     </section>
 
   </main>
@@ -151,7 +143,8 @@
     import {
       ready, catalog, naira, phone, price, districtOk, paymentOk,
       saveDraft, loadDraft, clearDraft, rememberLast, submitOrder, isOnline, haptic,
-      ORDER_MODE, composeWhatsAppOrderUrl, alternateOperator
+      ORDER_MODE, composeWhatsAppOrderUrl, composeAllOperatorUrls,
+      primaryOperator, WHATSAPP_GROUP_INVITE
     } from './shell.js';
 
     await ready;
@@ -318,26 +311,41 @@
 
       // ── Mode 1: WhatsApp (default — Phase 0a, no infra) ──
       if (ORDER_MODE === 'whatsapp') {
-        // Round-robin picks the next operator; build URL pinned to that one
-        // so the alternate-line link can target the other operator.
-        const { url, operator } = composeWhatsAppOrderUrl(payload);
-        const alt = alternateOperator(operator.number);
-        const { url: altUrl } = composeWhatsAppOrderUrl(payload, alt.number);
+        const allOps = composeAllOperatorUrls(payload);
+        const primary = primaryOperator();
+        const primaryUrl = allOps.find(x => x.operator.number === primary.number).url;
 
         const localId = 'WA-' + Date.now().toString(36).toUpperCase();
-        rememberLast({ order_id: localId, size: state.size, mode: 'whatsapp', op: operator.label });
+        rememberLast({ order_id: localId, size: state.size, mode: 'whatsapp' });
         clearDraft();
         haptic([30, 60, 30]);
 
-        // Compose the success-step UI and open WhatsApp synchronously
-        $('reopen-wa').href = url;
+        // Render a CTA per operator + optional group invite
         $('success-summary').textContent =
           `${state.size}kg · ${naira(price(state.size))} · ${districtLabel[state.district] || ''}`;
-        $('op-label').textContent = operator.label;
-        $('alt-op-link').href = altUrl;
-        $('alt-op-label').textContent = alt.label;
 
-        window.open(url, '_blank', 'noopener');
+        const stack = $('op-cta-stack');
+        stack.innerHTML = '';
+        allOps.forEach(({ operator: op, url }, i) => {
+          const a = document.createElement('a');
+          a.className = 'btn ' + (op.number === primary.number ? 'btn-flame' : 'btn-secondary');
+          a.href = url;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.innerHTML = `Send to <strong>${op.label}</strong> · <span style="opacity:0.85; font-weight:500;">${op.display}</span>`;
+          stack.appendChild(a);
+        });
+        if (WHATSAPP_GROUP_INVITE) {
+          const g = document.createElement('a');
+          g.className = 'btn btn-secondary';
+          g.href = WHATSAPP_GROUP_INVITE;
+          g.target = '_blank';
+          g.rel = 'noopener';
+          g.textContent = 'Open NaijaGaz operations group';
+          stack.appendChild(g);
+        }
+
+        window.open(primaryUrl, '_blank', 'noopener');
         goto(5);
         return;
       }
