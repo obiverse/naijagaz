@@ -22,7 +22,8 @@ export const BROKER_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 
 // WhatsApp number for ordering & customer service.
 // Format: E.164 without the leading '+' for wa.me links.
-export const WHATSAPP_NUMBER = '12409750431';
+// Nigerian line: 0814 965 3044 → E.164: +234 814 965 3044
+export const WHATSAPP_NUMBER = '2348149653044';
 export const SUPPORT_WHATSAPP = '+' + WHATSAPP_NUMBER;
 
 // Prefilled blank template for the landing-page "Order on WhatsApp" link.
