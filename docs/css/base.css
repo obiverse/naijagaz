@@ -460,6 +460,152 @@ small { font-size: var(--fs-caption); }
 fieldset { border: none; padding: 0; margin: 0 0 20px; }
 
 /* ════════════════════════════════════════════════
+   PILL GRID — for short enumerable choices (districts, etc.)
+   ════════════════════════════════════════════════ */
+
+.pill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+}
+.pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 14px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink-800);
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: -0.005em;
+  transition: border-color 0.15s,
+              background 0.15s,
+              color 0.15s,
+              transform 0.06s var(--ease-out-expo),
+              box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pill:active { transform: scale(0.97); }
+.pill.selected {
+  border-color: var(--cobalt-600);
+  background: var(--cobalt-50);
+  color: var(--cobalt-700);
+  box-shadow: 0 0 0 3px rgba(11, 63, 224, 0.10);
+}
+.pill-grid.error .pill {
+  border-color: var(--warn);
+  animation: shake 0.4s var(--ease-out-expo);
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+/* ════════════════════════════════════════════════
+   INPUT WITH FLAG — phone field with NG indicator
+   ════════════════════════════════════════════════ */
+
+.input-with-flag {
+  position: relative;
+}
+.input-with-flag .flag-tag {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 1;
+  font-weight: 700;
+  font-size: var(--fs-body-sm);
+  color: var(--cobalt-700);
+}
+.input-with-flag .flag-tag::after {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+  margin-left: 4px;
+}
+.input-with-flag input { padding-left: 70px !important; }
+
+/* ════════════════════════════════════════════════
+   BOTTOM SHEET MODAL
+   ════════════════════════════════════════════════ */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 31, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: backdrop-fade 0.2s ease-out;
+}
+.sheet-backdrop.closing { animation: backdrop-fade 0.2s ease-out reverse forwards; }
+.sheet-backdrop[hidden] { display: none; }
+
+.sheet {
+  width: 100%;
+  max-width: var(--content-w);
+  background: var(--paper);
+  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+  padding: 8px 24px 28px;
+  box-shadow: var(--sh-xl);
+  animation: sheet-rise 0.4s var(--ease-out-expo);
+}
+.sheet-backdrop.closing .sheet {
+  animation: sheet-rise 0.3s var(--ease-out-expo) reverse forwards;
+}
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--line);
+  border-radius: var(--r-pill);
+  margin: 0 auto 18px;
+}
+.sheet h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 22px;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+.sheet .sheet-sub {
+  color: var(--ink-500);
+  font-size: var(--fs-body-sm);
+  margin: 0 0 18px;
+}
+.sheet .sheet-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@keyframes backdrop-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes sheet-rise {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ════════════════════════════════════════════════
    CYLINDER SIZE GRID
    ════════════════════════════════════════════════ */
 

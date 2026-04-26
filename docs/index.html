@@ -26,7 +26,6 @@
   <main class="hero">
 
     <div class="hero-mark" aria-hidden="true">
-      <!-- Orbital nine — slow rotation, sacred geometry alive -->
       <svg class="orbit" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <g>
           <circle cx="100"   cy="10"     r="3.5"/>
@@ -62,6 +61,23 @@
 
 </div>
 
+<!-- ── Track-an-order bottom sheet ─────────────────── -->
+<div class="sheet-backdrop" id="track-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="track-sheet-title">
+  <div class="sheet">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <h3 id="track-sheet-title">Track an order</h3>
+    <p class="sheet-sub">Enter the order ID we sent by SMS.</p>
+    <label class="field" style="margin-bottom: 8px;">
+      <input id="track-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="NG-20260426-0001">
+    </label>
+    <div class="sheet-actions">
+      <button class="btn btn-primary" id="track-go">Track</button>
+      <button class="btn btn-ghost" id="track-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Install banner ─────────────────────────────── -->
 <div class="install-banner" id="install-banner" hidden>
   <p>Install NaijaGaz for faster reorders</p>
   <button id="install-btn">Install</button>
@@ -79,14 +95,41 @@
     document.getElementById('reorder-link').hidden = false;
   }
 
-  // Track-an-order via prompt
+  // ── Track-an-order bottom sheet ──
+  const sheet = document.getElementById('track-sheet');
+  const input = document.getElementById('track-input');
+
+  function openSheet() {
+    sheet.hidden = false;
+    requestAnimationFrame(() => input.focus());
+  }
+  function closeSheet() {
+    sheet.classList.add('closing');
+    setTimeout(() => {
+      sheet.hidden = true;
+      sheet.classList.remove('closing');
+      input.value = '';
+    }, 280);
+  }
+
   document.getElementById('track-link').addEventListener('click', (e) => {
     e.preventDefault();
-    const id = prompt('Order ID (e.g. NG-20260426-0001):');
-    if (id) location.href = 'track.html?id=' + encodeURIComponent(id.trim());
+    openSheet();
+  });
+  document.getElementById('track-cancel').addEventListener('click', closeSheet);
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !sheet.hidden) closeSheet();
   });
 
-  // Install banner — only show if dismissed flag isn't set this session
+  function go() {
+    const id = input.value.trim();
+    if (id) location.href = 'track.html?id=' + encodeURIComponent(id);
+  }
+  document.getElementById('track-go').addEventListener('click', go);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+
+  // ── Install banner ──
   const banner = document.getElementById('install-banner');
   document.addEventListener('naijagaz:installable', () => {
     if (!sessionStorage.getItem('install_dismissed')) banner.hidden = false;

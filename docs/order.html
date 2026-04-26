@@ -41,15 +41,14 @@
       <h2>Where to deliver?</h2>
       <p class="muted" style="margin-bottom: 24px;">A clear address gets the rider to you faster.</p>
 
-      <label class="field">
+      <div class="field">
         <span>District</span>
-        <select id="f-district" required>
-          <option value="">Choose…</option>
-          <option value="lugbe">Lugbe</option>
-          <option value="kubwa">Kubwa</option>
-          <option value="nyanya">Nyanya</option>
-        </select>
-      </label>
+        <div class="pill-grid" id="district-pills" role="radiogroup" aria-label="District">
+          <button type="button" class="pill" data-district="lugbe"  role="radio" aria-checked="false">Lugbe</button>
+          <button type="button" class="pill" data-district="kubwa"  role="radio" aria-checked="false">Kubwa</button>
+          <button type="button" class="pill" data-district="nyanya" role="radio" aria-checked="false">Nyanya</button>
+        </div>
+      </div>
       <label class="field">
         <span>Address</span>
         <textarea id="f-address" rows="3" placeholder="Estate / street / house number" required></textarea>
@@ -69,10 +68,13 @@
       <h2>How can we reach you?</h2>
       <p class="muted" style="margin-bottom: 24px;">For SMS updates and the rider's call.</p>
 
-      <label class="field" id="phone-field">
+      <div class="field" id="phone-field">
         <span>Phone number</span>
-        <input id="f-phone" type="tel" inputmode="tel" placeholder="0801 234 5678" autocomplete="tel" required>
-      </label>
+        <div class="input-with-flag">
+          <span class="flag-tag" aria-hidden="true">🇳🇬 NG</span>
+          <input id="f-phone" type="tel" inputmode="tel" placeholder="0801 234 5678" autocomplete="tel" required>
+        </div>
+      </div>
       <label class="field">
         <span>Your name <small class="muted">(optional)</small></span>
         <input id="f-name" type="text" autocomplete="given-name" placeholder="Aisha">
@@ -177,14 +179,24 @@
 
     // ── Field bindings ──
     const $ = (id) => document.getElementById(id);
-    $('f-district').value = state.district;
+    document.querySelectorAll('#district-pills .pill').forEach(p => {
+      p.classList.toggle('selected', p.dataset.district === state.district);
+      p.setAttribute('aria-checked', String(p.dataset.district === state.district));
+      p.addEventListener('click', () => {
+        state.district = p.dataset.district;
+        document.querySelectorAll('#district-pills .pill').forEach(x => {
+          x.classList.toggle('selected', x.dataset.district === state.district);
+          x.setAttribute('aria-checked', String(x.dataset.district === state.district));
+        });
+        saveDraft(state);
+      });
+    });
     $('f-address').value = state.address;
     $('f-landmark').value = state.landmark;
     $('f-phone').value = state.phone;
     $('f-name').value = state.name;
     document.querySelector(`input[name="payment"][value="${state.payment}"]`).checked = true;
 
-    $('f-district').addEventListener('change', e => { state.district = e.target.value; saveDraft(state); });
     $('f-address').addEventListener('input', e => { state.address = e.target.value; saveDraft(state); });
     $('f-landmark').addEventListener('input', e => { state.landmark = e.target.value; saveDraft(state); });
     $('f-phone').addEventListener('input', e => { state.phone = e.target.value; saveDraft(state); });
@@ -195,7 +207,16 @@
 
     // ── Validation (Wasm-backed) ──
     function validateStep2() {
-      if (!districtOk(state.district)) return flashError('f-district', 'Choose your district');
+      if (!districtOk(state.district)) {
+        const pills = document.getElementById('district-pills');
+        pills.classList.add('error');
+        setTimeout(() => pills.classList.remove('error'), 1800);
+        const s = $('submit-status');
+        s.textContent = 'Pick your district';
+        s.style.color = 'var(--warn)';
+        setTimeout(() => { if (s.textContent === 'Pick your district') s.textContent = ''; }, 3000);
+        return false;
+      }
       if (!state.address || state.address.trim().length < 5)
         return flashError('f-address', 'A clear address helps the rider find you');
       return true;
