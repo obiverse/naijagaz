@@ -76,13 +76,16 @@
   </main>
 
   <script type="module">
-    import { ready, fetchOrder, haptic } from './shell.js';
+    import { ready, fetchOrder, haptic, findInHistory, naira, relativeTime } from './shell.js';
 
     await ready;
 
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
     const fresh = params.has('fresh');
+
+    // Look up the local history entry first — works even when no broker.
+    const localOrder = id ? findInHistory(id) : null;
 
     const banner = document.getElementById('banner');
     const idEl = document.getElementById('order-id');
@@ -106,8 +109,34 @@
       statusText.textContent = 'Open this page from a tracking link.';
     } else {
       idEl.textContent = id;
-      refresh();
-      setInterval(refresh, 30000);
+      // For WhatsApp-mode orders we have no remote endpoint — render
+      // from local history. For broker-mode orders we render local
+      // first (instant), then fetch live + reconcile.
+      if (localOrder) renderFromLocal();
+      if (localOrder?.mode !== 'whatsapp') {
+        refresh();
+        setInterval(refresh, 30000);
+      }
+    }
+
+    function renderFromLocal() {
+      if (!localOrder) return;
+      // For WhatsApp orders — sender hands off to operator; status stays 'sent'.
+      // Show partial timeline (NEW done, rest pending) and the local detail.
+      const status = localOrder.status || 'sent';
+      const sequence = ['NEW', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'COMPLETED'];
+      const idx = status === 'sent' ? 0 : sequence.indexOf(status);
+      document.querySelectorAll('#timeline li').forEach((li, i) => {
+        li.classList.toggle('done', i <= idx);
+        li.classList.toggle('current', i === idx);
+      });
+
+      emojiEl.textContent = '📦';
+      iconBox.className = 'status-icon';
+      banner.textContent = localOrder.size ? `${localOrder.size}kg · ${naira(localOrder.price)}` : 'Order';
+      statusText.textContent = localOrder.mode === 'whatsapp'
+        ? `Sent on WhatsApp ${relativeTime(localOrder.timestamp)}. The operator will confirm.`
+        : `Order placed ${relativeTime(localOrder.timestamp)}.`;
     }
 
     const ICONS = {

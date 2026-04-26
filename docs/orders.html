@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Your orders · NaijaGaz</title>
+  <meta name="theme-color" content="#0B3FE0">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Ubuntu:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="index.html" class="back" aria-label="Back">←</a>
+    <span class="step-label">Your orders</span>
+  </header>
+
+  <main class="container">
+
+    <div class="orders-head">
+      <h1>Your orders</h1>
+      <a href="order.html" class="btn-link" id="new-order-link" style="font-weight: 700;">+ New order</a>
+    </div>
+
+    <p id="orders-meta" class="muted" style="margin-bottom: 22px;"></p>
+
+    <div id="orders-empty" hidden style="text-align: center; padding: 48px 0;">
+      <p class="lede" style="margin-bottom: 24px;">No orders yet.</p>
+      <a href="order.html" class="btn btn-flame">Place your first order →</a>
+    </div>
+
+    <div id="orders-list" class="orders-list"></div>
+
+  </main>
+
+  <script type="module">
+    import { ready, getHistory, naira, relativeTime } from './shell.js';
+
+    await ready;
+
+    const districtLabel = { lugbe: 'Lugbe', kubwa: 'Kubwa', nyanya: 'Nyanya', gwarinpa: 'Gwarinpa' };
+    const STATUS_LABEL = {
+      sent: 'Sent',
+      CONFIRMED: 'Confirmed',
+      PREPARING: 'Preparing',
+      OUT_FOR_DELIVERY: 'On the way',
+      COMPLETED: 'Delivered',
+      CANCELLED: 'Cancelled',
+      delivered: 'Delivered',
+    };
+
+    const orders = getHistory();
+    const list = document.getElementById('orders-list');
+    const meta = document.getElementById('orders-meta');
+
+    if (orders.length === 0) {
+      document.getElementById('orders-empty').hidden = false;
+      meta.textContent = '';
+    } else {
+      meta.textContent = orders.length === 1
+        ? '1 order on this device'
+        : `${orders.length} orders on this device`;
+
+      orders.forEach((o) => {
+        const card = document.createElement('a');
+        card.className = 'order-card';
+        card.href = 'track.html?id=' + encodeURIComponent(o.order_id);
+
+        const statusKey = (o.status || 'sent').toString();
+        const statusClass = statusKey.toLowerCase().replace(/_/g, '-');
+        const statusLabel = STATUS_LABEL[statusKey] || statusKey;
+
+        const summary = o.size
+          ? `${o.size}kg · ${o.price ? naira(o.price) : ''}`
+          : 'Order';
+        const district = districtLabel[o.district] || '';
+        const when = relativeTime(o.timestamp);
+
+        card.innerHTML = `
+          <div class="order-card-row">
+            <span class="order-status order-status-${statusClass}">${statusLabel}</span>
+            <time class="order-time" datetime="${o.timestamp ? new Date(o.timestamp).toISOString() : ''}">${when}</time>
+          </div>
+          <div class="order-card-row order-card-summary">
+            <strong>${summary}</strong>
+            ${district ? `<span class="order-district">${district}</span>` : ''}
+          </div>
+          <div class="order-card-row order-card-foot">
+            <code class="order-id">${o.order_id}</code>
+            <span class="order-arrow" aria-hidden="true">→</span>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+  </script>
+
+</body>
+</html>

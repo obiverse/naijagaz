@@ -1283,6 +1283,120 @@ fieldset { border: none; padding: 0; margin: 0 0 20px; }
 .install-card[hidden] { display: none; }
 
 /* ════════════════════════════════════════════════
+   ORDERS LIST — /orders.html
+   ════════════════════════════════════════════════ */
+
+.orders-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.orders-head h1 { margin: 0; }
+
+.orders-list {
+  display: grid;
+  gap: 12px;
+}
+
+.order-card {
+  display: block;
+  padding: 16px 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  text-decoration: none;
+  color: var(--ink-800);
+  position: relative;
+  transition: border-color 0.15s, transform 0.06s var(--ease-out-expo),
+              box-shadow 0.2s, background 0.15s;
+}
+.order-card:hover { border-color: var(--cobalt-300); box-shadow: var(--sh-md); transform: translateY(-1px); }
+.order-card:active { transform: scale(0.99); }
+
+.order-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.order-card-row + .order-card-row { margin-top: 10px; }
+
+.order-card-summary strong {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink-900);
+}
+.order-district {
+  font-size: var(--fs-body-sm);
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+.order-card-foot {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line-2);
+}
+.order-id {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--fs-caption);
+  color: var(--ink-500);
+  background: var(--ivory);
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  letter-spacing: 0.02em;
+}
+.order-arrow {
+  color: var(--cobalt-600);
+  font-weight: 700;
+  font-size: 18px;
+}
+.order-time {
+  font-size: var(--fs-caption);
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+/* Status badges */
+.order-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.order-status-sent,
+.order-status-new {
+  background: var(--cobalt-50);
+  color: var(--cobalt-700);
+}
+.order-status-confirmed {
+  background: var(--cobalt-100);
+  color: var(--cobalt-800);
+}
+.order-status-preparing,
+.order-status-out-for-delivery {
+  background: var(--ember-100);
+  color: var(--ember-600);
+}
+.order-status-completed,
+.order-status-delivered {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--success);
+}
+.order-status-cancelled {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--warn);
+}
+
+/* ════════════════════════════════════════════════
    APP UPDATE TOAST — when SW finds a newer version
    ════════════════════════════════════════════════ */
 

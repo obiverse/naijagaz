@@ -328,7 +328,22 @@
         const primaryUrl = allOps.find(x => x.operator.number === primary.number).url;
 
         const localId = 'WA-' + Date.now().toString(36).toUpperCase();
-        rememberLast({ order_id: localId, size: state.size, mode: 'whatsapp', timestamp: Date.now() });
+        const total = price(state.size);
+        rememberLast({
+          order_id: localId,
+          size: state.size,
+          price: total,
+          district: state.district,
+          address: state.address,
+          landmark: state.landmark,
+          phone: state.phone,
+          name: state.name,
+          payment: state.payment,
+          mode: 'whatsapp',
+          operator: primary.label,
+          timestamp: Date.now(),
+          status: 'sent',
+        });
         clearDraft();
         trackEngagement('order');
         haptic([30, 60, 30]);
@@ -379,7 +394,19 @@
           if (!isOnline()) throw new Error('OFFLINE');
           const r = await submitOrder(payload);
           if (!r.ok) throw new Error(r.error || 'UNKNOWN');
-          rememberLast({ order_id: r.order_id, size: state.size, timestamp: Date.now() });
+          rememberLast({
+            order_id: r.order_id,
+            size: state.size,
+            price: price(state.size),
+            district: state.district,
+            address: state.address,
+            phone: state.phone,
+            name: state.name,
+            payment: state.payment,
+            mode: 'broker',
+            timestamp: Date.now(),
+            status: 'sent',
+          });
           clearDraft();
           haptic([30, 60, 30]);
           location.href = 'track.html?id=' + encodeURIComponent(r.order_id) + '&fresh=1';
@@ -398,7 +425,15 @@
     });
 
     // ── Boot to last step ──
-    if (state.size && state.step > 1) goto(state.step);
+    // Guard: if state.step is 5 but no order context, fall back to step 1.
+    // This protects against reload/back-button reaching the success view
+    // with empty placeholders.
+    if (state.step === 5 && !state.size) {
+      state.step = 1;
+      saveDraft(state);
+    }
+    if (state.size && state.step > 1 && state.step <= 4) goto(state.step);
+    else if (state.size && state.step === 5) goto(5);
     else updateStepper(state.step || 1);
   </script>
 

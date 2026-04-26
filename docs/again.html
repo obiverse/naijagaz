@@ -29,6 +29,7 @@
     <div id="actions" hidden style="margin-top: 20px;">
       <a class="btn btn-flame" href="order.html" id="reorder-btn">Place this order again</a>
       <a class="btn btn-secondary" href="order.html" style="margin-top: 12px;" id="change-btn">Change something</a>
+      <a class="btn-link" href="orders.html" id="all-orders-link" hidden style="display: block; text-align: center; margin-top: 16px;">View all your orders →</a>
     </div>
 
     <div id="empty" hidden style="text-align: center; padding-top: 24px;">
@@ -38,11 +39,15 @@
   </main>
 
   <script type="module">
-    import { ready, recallLast, saveDraft } from './shell.js';
+    import { ready, recallLast, saveDraft, getHistory } from './shell.js';
 
     await ready;
 
     const last = recallLast();
+    const history = getHistory();
+    if (history.length > 1) {
+      document.getElementById('all-orders-link').hidden = false;
+    }
 
     if (!last || !last.order_id) {
       document.getElementById('intro').hidden = true;

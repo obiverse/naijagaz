@@ -47,8 +47,10 @@ export const catalog = () => JSON.parse(core.cylinder_catalog());
 
 // ── Draft persistence (localStorage — simple, durable, offline) ──
 
-const DRAFT_KEY = 'naijagaz.draft.v1';
-const LAST_KEY = 'naijagaz.last.v1';
+const DRAFT_KEY   = 'naijagaz.draft.v1';
+const LAST_KEY    = 'naijagaz.last.v1';
+const HISTORY_KEY = 'naijagaz.history.v1';
+const HISTORY_MAX = 50;
 
 export function saveDraft(d) {
   try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch {}
@@ -59,11 +61,78 @@ export function loadDraft() {
 export function clearDraft() {
   try { localStorage.removeItem(DRAFT_KEY); } catch {}
 }
+
+// ── Order history (durable, multi-order, newest first) ──
+//
+// Every successful submit calls addToHistory(). The list is the single
+// source of truth for "your orders" — /orders.html lists it, /again.html
+// reorders the head, /track.html cross-references by order_id.
+
+export function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+export function addToHistory(order) {
+  const h = getHistory();
+  const entry = { ...order, timestamp: order.timestamp || Date.now(), status: order.status || 'sent' };
+  // Replace in place if order_id already exists (idempotent on retries)
+  const idx = h.findIndex(o => o.order_id === entry.order_id);
+  if (idx >= 0) h[idx] = entry;
+  else h.unshift(entry);
+  if (h.length > HISTORY_MAX) h.length = HISTORY_MAX;
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch {}
+  return entry;
+}
+export function findInHistory(orderId) {
+  return getHistory().find(o => o.order_id === orderId) || null;
+}
+export function updateInHistory(orderId, updates) {
+  const h = getHistory();
+  const idx = h.findIndex(o => o.order_id === orderId);
+  if (idx === -1) return null;
+  h[idx] = { ...h[idx], ...updates };
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch {}
+  return h[idx];
+}
+export function clearHistory() {
+  try { localStorage.removeItem(HISTORY_KEY); } catch {}
+}
+
+// ── Last-order convenience (kept for backward compat) ──
+//
+// rememberLast(o) writes both the LAST_KEY (legacy alias) AND adds to
+// the history. recallLast() returns LAST_KEY first, falls back to head
+// of history. Together: one append, two reads.
+
 export function rememberLast(o) {
   try { localStorage.setItem(LAST_KEY, JSON.stringify(o)); } catch {}
+  addToHistory(o);
 }
 export function recallLast() {
-  try { return JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); } catch { return null; }
+  try {
+    const raw = localStorage.getItem(LAST_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return getHistory()[0] || null;
+}
+
+// ── Relative-time formatter — for order cards ──
+const TIME_UNITS = [
+  { ms: 60_000,        single: 'just now',    plural: null },
+  { ms: 3_600_000,     single: '%d minute ago',   plural: '%d minutes ago' },
+  { ms: 86_400_000,    single: '%d hour ago',     plural: '%d hours ago' },
+  { ms: 604_800_000,   single: 'yesterday',       plural: '%d days ago' },
+  { ms: 2_592_000_000, single: '%d week ago',     plural: '%d weeks ago' },
+  { ms: Infinity,      single: '%d month ago',    plural: '%d months ago' },
+];
+export function relativeTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  if (diff < 60_000) return 'just now';
+  if (diff < 3_600_000)  { const n = Math.floor(diff / 60_000);    return n === 1 ? '1 minute ago' : `${n} minutes ago`; }
+  if (diff < 86_400_000) { const n = Math.floor(diff / 3_600_000); return n === 1 ? '1 hour ago'   : `${n} hours ago`; }
+  if (diff < 604_800_000){ const n = Math.floor(diff / 86_400_000);return n === 1 ? 'yesterday'     : `${n} days ago`; }
+  if (diff < 2_592_000_000){const n = Math.floor(diff / 604_800_000); return n === 1 ? '1 week ago'  : `${n} weeks ago`; }
+  const n = Math.floor(diff / 2_592_000_000);                       return n === 1 ? '1 month ago'  : `${n} months ago`;
 }
 
 // ── Broker calls ──────────────────────────────────

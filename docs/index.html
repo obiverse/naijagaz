@@ -59,6 +59,7 @@
       </a>
 
       <a href="again.html" class="btn-link" id="reorder-link" hidden>↻ Reorder your last cylinder</a>
+      <a href="orders.html" class="btn-link" id="orders-link" hidden>📋 Your orders</a>
       <br>
       <a href="#" class="btn-link" id="track-link">Track an order →</a>
     </div>
@@ -93,7 +94,7 @@
 
 <script type="module">
   import {
-    ready, recallLast, haptic, primaryOperator,
+    ready, recallLast, getHistory, haptic, primaryOperator,
     inferContext, suggestGreeting, suggestPrimaryCta
   } from './shell.js';
   import { WHATSAPP_ORDER_TEMPLATE } from './config.js';
@@ -122,10 +123,14 @@
     }
   }
 
-  // ── Reorder shortcut visibility ──
+  // ── Reorder + Your orders link visibility ──
   const last = recallLast();
   if (last && last.order_id) {
     document.getElementById('reorder-link').hidden = false;
+  }
+  const history = getHistory();
+  if (history.length >= 1) {
+    document.getElementById('orders-link').hidden = false;
   }
 
   // ── Landing page CTA hits the primary operator (NG line) ──
