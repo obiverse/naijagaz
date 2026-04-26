@@ -654,6 +654,113 @@ export function haptic(pattern = 12) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// CAPABILITY TOKENS — order_id includes a crypto-random suffix
+//
+// NG-20260427-0001-A7F2K3  ← the token
+// WA-LK3JD92K-HX7P9R       ← also tokenized
+//
+// The token IS the auth: anyone with the URL can track that order.
+// Without it, fetching by guessed ID returns NOT_FOUND. This makes
+// /track.html?id=… safe to share with a delivery partner / friend
+// without exposing other customers' orders.
+//
+// crypto.getRandomValues is cryptographically secure (W3C spec) and
+// available in every browser since 2016. No Wasm round-trip.
+// ═══════════════════════════════════════════════════════════════════
+
+const TOKEN_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1 — unambiguous when read aloud
+const TOKEN_LENGTH = 6;
+
+export function generateToken(len = TOKEN_LENGTH) {
+  const arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => TOKEN_CHARS[b % TOKEN_CHARS.length]).join('');
+}
+
+// Best-effort: extract the canonical id (without token) for display only.
+// e.g. "NG-20260427-0001-A7F2K3" → "NG-20260427-0001"
+export function shortOrderId(fullId) {
+  const m = String(fullId).match(/^(NG-\d{8}-\d{4}|WA-[A-Z0-9]+)/);
+  return m ? m[1] : fullId;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ANALYTICS — observable funnel without third-party trackers
+//
+// Events are appended to a rolling localStorage queue (cap 200).
+// A future drainer (Apps Script doPost or a Worker) can ship them
+// upstream; for Phase 0 they live on-device and can be exported via
+// /admin.html or the JS console (`exportEvents()`). No third-party
+// SDKs, no PII leaving the device until we build the broker.
+// ═══════════════════════════════════════════════════════════════════
+
+const EVENTS_KEY = 'naijagaz.events.v1';
+const SESSION_KEY = 'naijagaz.session';
+const EVENTS_MAX = 200;
+
+export function getSessionId() {
+  let id = sessionStorage.getItem(SESSION_KEY);
+  if (!id) {
+    id = 'S-' + Date.now().toString(36).toUpperCase() + '-' + generateToken(4);
+    try { sessionStorage.setItem(SESSION_KEY, id); } catch {}
+  }
+  return id;
+}
+
+export function track(name, props = {}) {
+  const events = getEvents();
+  events.push({
+    ts: Date.now(),
+    name,
+    session: getSessionId(),
+    state: inferUserState(),
+    page: location.pathname,
+    referrer: document.referrer || null,
+    props,
+  });
+  while (events.length > EVENTS_MAX) events.shift();
+  try { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); } catch {}
+}
+
+export function getEvents() {
+  try { return JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]'); } catch { return []; }
+}
+
+export function exportEvents() {
+  // For console use: copy(exportEvents()) → JSON ready to paste into a sheet
+  const evts = getEvents();
+  const json = JSON.stringify(evts, null, 2);
+  if (typeof console !== 'undefined') console.log(`[naijagaz] ${evts.length} events`, evts);
+  return json;
+}
+
+export function clearEvents() {
+  try { localStorage.removeItem(EVENTS_KEY); } catch {}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// WEB SHARE — viral moment after order success
+// ═══════════════════════════════════════════════════════════════════
+
+export function canShare(data = {}) {
+  return typeof navigator !== 'undefined'
+      && typeof navigator.share === 'function'
+      && (data ? (navigator.canShare ? navigator.canShare(data) : true) : true);
+}
+
+export async function shareOrder(text, url) {
+  if (!canShare()) return false;
+  try {
+    await navigator.share({ title: 'NaijaGaz', text, url });
+    track('share_completed', { surface: 'order_success' });
+    return true;
+  } catch (e) {
+    if (e.name !== 'AbortError') track('share_error', { error: e.message });
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // THEME — light / dark / system (auto-detect + persistence)
 // ═══════════════════════════════════════════════════════════════════
 

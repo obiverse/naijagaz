@@ -68,17 +68,29 @@
       </div>
 
       <p id="status-text" class="status-text">Loading…</p>
+
+      <!-- Local actions for WhatsApp-mode orders -->
+      <div id="local-actions" hidden style="display: grid; gap: 10px; margin-top: 18px;">
+        <button id="mark-delivered" class="btn btn-secondary" type="button">Mark as delivered ✓</button>
+        <button id="share-track" class="btn btn-ghost" type="button" hidden>Share tracking link ↗</button>
+      </div>
     </div>
 
-    <div style="text-align:center;">
-      <a href="index.html" class="btn-link">← Back to home</a>
+    <div style="text-align:center; margin-top: 14px;">
+      <a href="orders.html" class="btn-link">📋 All your orders</a>
+      <span style="color: var(--ink-400); margin: 0 8px;">·</span>
+      <a href="index.html" class="btn-link">Home</a>
     </div>
   </main>
 
   <script type="module">
-    import { ready, fetchOrder, haptic, findInHistory, naira, relativeTime } from './shell.js';
+    import {
+      ready, fetchOrder, haptic, findInHistory, updateInHistory,
+      naira, relativeTime, track, canShare, shareOrder
+    } from './shell.js';
 
     await ready;
+    track('track_page_open');
 
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
@@ -121,22 +133,61 @@
 
     function renderFromLocal() {
       if (!localOrder) return;
-      // For WhatsApp orders — sender hands off to operator; status stays 'sent'.
-      // Show partial timeline (NEW done, rest pending) and the local detail.
       const status = localOrder.status || 'sent';
       const sequence = ['NEW', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'COMPLETED'];
-      const idx = status === 'sent' ? 0 : sequence.indexOf(status);
+
+      let idx;
+      if (status === 'sent') idx = 0;
+      else if (status === 'delivered') idx = sequence.length - 1;
+      else idx = sequence.indexOf(status);
+
       document.querySelectorAll('#timeline li').forEach((li, i) => {
         li.classList.toggle('done', i <= idx);
         li.classList.toggle('current', i === idx);
       });
 
-      emojiEl.textContent = '📦';
       iconBox.className = 'status-icon';
+      if (status === 'delivered' || status === 'COMPLETED') {
+        emojiEl.textContent = '✨';
+        iconBox.classList.add('is-completed');
+      } else {
+        emojiEl.textContent = '📦';
+      }
+
       banner.textContent = localOrder.size ? `${localOrder.size}kg · ${naira(localOrder.price)}` : 'Order';
-      statusText.textContent = localOrder.mode === 'whatsapp'
-        ? `Sent on WhatsApp ${relativeTime(localOrder.timestamp)}. The operator will confirm.`
-        : `Order placed ${relativeTime(localOrder.timestamp)}.`;
+      statusText.textContent =
+        status === 'delivered' ? 'Delivered. Thank you!' :
+        localOrder.mode === 'whatsapp'
+          ? `Sent on WhatsApp ${relativeTime(localOrder.timestamp)}. The operator will confirm.`
+          : `Order placed ${relativeTime(localOrder.timestamp)}.`;
+
+      // Surface the local-action buttons for WhatsApp-mode orders only.
+      // (Broker mode gets its truth from doGet → server-controlled status.)
+      const actions = document.getElementById('local-actions');
+      if (localOrder.mode === 'whatsapp' && actions) {
+        actions.hidden = false;
+        const md = document.getElementById('mark-delivered');
+        if (status === 'delivered') {
+          md.textContent = 'Delivered ✓';
+          md.disabled = true;
+        }
+        md.addEventListener('click', () => {
+          if (md.disabled) return;
+          updateInHistory(id, { status: 'delivered', delivered_at: Date.now() });
+          track('mark_delivered', { order_id: id });
+          haptic([20, 40, 20]);
+          renderFromLocal();
+        }, { once: true });
+
+        const sb = document.getElementById('share-track');
+        if (canShare()) {
+          sb.hidden = false;
+          sb.addEventListener('click', () => {
+            haptic(10);
+            shareOrder(`Track my NaijaGaz order — ${localOrder.size}kg almost on the way`, location.href);
+          });
+        }
+      }
     }
 
     const ICONS = {

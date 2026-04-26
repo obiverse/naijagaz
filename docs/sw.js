@@ -1,13 +1,40 @@
-// NaijaGaz service worker — network-first for everything.
-// Online: fetch fresh, cache the response. Offline: serve from cache.
-// No precache list. No version tokens beyond the cache name. Build script
-// rewrites the cache name on each release to bust stale assets.
+// NaijaGaz service worker — precache + network-first.
+//
+// On install: precache the critical app shell so first-visit-after-load
+// is instantly available offline.
+// On fetch: try network first, fall back to cache. Broker calls bypass
+// caching entirely (always-fresh data).
+// On message (SKIP_WAITING): activate the new SW; the page reloads.
 
-const CACHE = 'ng-c62ee70';
+const CACHE = 'ng-38dcf2b';
+
+const PRECACHE = [
+  './',
+  './index.html',
+  './order.html',
+  './track.html',
+  './again.html',
+  './orders.html',
+  './shell.js',
+  './config.js',
+  './css/base.css',
+  './manifest.webmanifest',
+  './icon.svg',
+  './logo.svg',
+  './icon-192.png',
+  './apple-touch-icon.png',
+  './favicon.ico',
+  './pkg/naijagaz_core/naijagaz_core.js',
+  './pkg/naijagaz_core/naijagaz_core_bg.wasm',
+];
 
 self.addEventListener('install', (event) => {
-  // Don't auto-skip — wait for explicit SKIP_WAITING from the page so
-  // the user is in control of the update moment via the update toast.
+  // Precache best-effort — never fail install on a 404.
+  event.waitUntil(
+    caches.open(CACHE).then((c) =>
+      Promise.all(PRECACHE.map((u) => c.add(u).catch(() => {})))
+    )
+  );
 });
 
 self.addEventListener('message', (event) => {
@@ -29,6 +56,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
   // Never cache the broker — order writes and status reads are always fresh.
   const url = new URL(req.url);
   if (url.hostname.includes('script.google.com')) return;
@@ -42,6 +70,8 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       })
-      .catch(() => caches.match(req).then((cached) => cached || new Response('Offline', { status: 503 })))
+      .catch(() =>
+        caches.match(req).then((cached) => cached || new Response('Offline', { status: 503 }))
+      )
   );
 });

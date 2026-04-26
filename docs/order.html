@@ -135,6 +135,11 @@
       <p class="success-sub">Send to both operators so the first available picks it up.</p>
       <div id="op-cta-stack" style="display: grid; gap: 12px; margin-top: 28px;"></div>
 
+      <!-- Web Share button — surfaces only when navigator.share is available -->
+      <button class="btn btn-secondary" id="share-btn" type="button" hidden style="margin-top: 14px;">
+        Share with a friend ↗
+      </button>
+
       <!-- Install card — appears once when installable + not yet installed/dismissed -->
       <div class="install-card" id="install-card-success" hidden>
         <span class="install-card-icon">📱</span>
@@ -156,10 +161,12 @@
       saveDraft, loadDraft, clearDraft, rememberLast, submitOrder, isOnline, haptic,
       ORDER_MODE, composeWhatsAppOrderUrl, composeAllOperatorUrls,
       primaryOperator, WHATSAPP_GROUP_INVITE,
-      isInstalled, isInstallable, isIOS, trackEngagement
+      isInstalled, isInstallable, isIOS, trackEngagement,
+      generateToken, track, canShare, shareOrder
     } from './shell.js';
 
     await ready;
+    track('order_page_open');
 
     // ── State ──
     const state = Object.assign({
@@ -197,6 +204,7 @@
       updateStepper(n);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (n === 4) renderSummary();
+      track('order_step', { step: n, size: state.size, district: state.district });
     }
 
     function updateStepper(n) {
@@ -327,7 +335,10 @@
         const primary = primaryOperator();
         const primaryUrl = allOps.find(x => x.operator.number === primary.number).url;
 
-        const localId = 'WA-' + Date.now().toString(36).toUpperCase();
+        // Tokenized order ID — WA-{timestamp36}-{6-char-token}
+        // The token makes the tracking URL safe to share without
+        // exposing other customers' orders.
+        const localId = 'WA-' + Date.now().toString(36).toUpperCase() + '-' + generateToken();
         const total = price(state.size);
         rememberLast({
           order_id: localId,
@@ -346,11 +357,23 @@
         });
         clearDraft();
         trackEngagement('order');
+        track('order_submit', { mode: 'whatsapp', size: state.size, district: state.district, total });
         haptic([30, 60, 30]);
 
         // Render a CTA per operator + optional group invite
         $('success-summary').textContent =
           `${state.size}kg · ${naira(price(state.size))} · ${districtLabel[state.district] || ''}`;
+
+        // Wire the Web Share button if supported
+        const shareBtn = document.getElementById('share-btn');
+        if (shareBtn && canShare()) {
+          shareBtn.hidden = false;
+          shareBtn.addEventListener('click', () => {
+            haptic(10);
+            const trackUrl = location.origin + location.pathname.replace(/order\.html$/, 'track.html') + '?id=' + encodeURIComponent(localId);
+            shareOrder(`I just ordered ${state.size}kg of cooking gas on NaijaGaz — almost instantly!`, trackUrl);
+          }, { once: false });
+        }
 
         // Show install card if installable + not installed
         const card = document.getElementById('install-card-success');
@@ -394,6 +417,7 @@
           if (!isOnline()) throw new Error('OFFLINE');
           const r = await submitOrder(payload);
           if (!r.ok) throw new Error(r.error || 'UNKNOWN');
+          track('order_submit', { mode: 'broker', size: state.size, district: state.district, total: price(state.size) });
           rememberLast({
             order_id: r.order_id,
             size: state.size,

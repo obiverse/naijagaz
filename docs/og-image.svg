@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B3FE0"/>
+      <stop offset="0.55" stop-color="#1E1B4B"/>
+      <stop offset="1" stop-color="#2A1A3A"/>
+    </linearGradient>
+    <radialGradient id="emberGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#F97316" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="lattice" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+      <g transform="translate(100,100)" fill="none" stroke="#FFFFFF" stroke-width="0.7">
+        <circle r="44" opacity="0.08"/>
+        <circle r="30" opacity="0.10"/>
+        <circle r="16" opacity="0.13"/>
+        <line x1="-58" y1="0" x2="-48" y2="0" opacity="0.08"/>
+        <line x1="48" y1="0" x2="58" y2="0" opacity="0.08"/>
+        <line x1="0" y1="-58" x2="0" y2="-48" opacity="0.08"/>
+        <line x1="0" y1="48" x2="0" y2="58" opacity="0.08"/>
+        <circle r="2" fill="#F97316" stroke="none" opacity="0.55"/>
+      </g>
+    </pattern>
+  </defs>
+
+  <!-- Backdrop -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#lattice)"/>
+  <ellipse cx="280" cy="315" rx="280" ry="280" fill="url(#emberGlow)"/>
+
+  <!-- Mark (cylinder + flame + ember) — 280×280 disk, vesica cutout, ember spark -->
+  <g transform="translate(150, 175)">
+    <path fill-rule="evenodd" fill="#FFFFFF" d="
+      M 140 32 a 108 108 0 1 0 0 216 a 108 108 0 1 0 0 -216 Z
+      M 140 70 A 88 88 0 0 1 140 210 A 88 88 0 0 1 140 70 Z
+    "/>
+    <circle cx="140" cy="140" r="6" fill="#F97316"/>
+  </g>
+
+  <!-- Wordmark + tagline -->
+  <text x="500" y="280" fill="#FFFFFF" font-family="Outfit, 'Helvetica Neue', sans-serif" font-size="108" font-weight="800" letter-spacing="-3">naijagaz</text>
+  <text x="500" y="350" fill="#FFFFFF" fill-opacity="0.92" font-family="Outfit, 'Helvetica Neue', sans-serif" font-size="42" font-weight="500" letter-spacing="-0.5">Cooking gas, almost instantly.</text>
+
+  <!-- Districts strip -->
+  <line x1="500" y1="406" x2="540" y2="406" stroke="#F97316" stroke-width="2"/>
+  <text x="554" y="412" fill="#FB923C" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="20" font-weight="500" letter-spacing="3">LUGBE · KUBWA · NYANYA · GWARINPA</text>
+
+  <!-- Bottom domain -->
+  <text x="500" y="540" fill="#FFFFFF" fill-opacity="0.6" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="22" font-weight="500" letter-spacing="2">naijagaz.ng</text>
+
+  <!-- Top-right marker dots — sacred 9 -->
+  <g fill="#FB923C" opacity="0.65">
+    <circle cx="1100" cy="80" r="4"/>
+    <circle cx="1130" cy="100" r="4"/>
+    <circle cx="1150" cy="135" r="4"/>
+    <circle cx="1150" cy="170" r="4"/>
+    <circle cx="1130" cy="200" r="4"/>
+    <circle cx="1100" cy="220" r="4"/>
+    <circle cx="1070" cy="200" r="4"/>
+    <circle cx="1050" cy="170" r="4"/>
+    <circle cx="1050" cy="135" r="4"/>
+  </g>
+</svg>

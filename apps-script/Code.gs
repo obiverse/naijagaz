@@ -147,6 +147,9 @@ function validateOrder(o) {
 
 // ─── Order ID — NG-YYYYMMDD-NNNN ───────────────────────────────────
 
+// NG-YYYYMMDD-NNNN-XXXXXX  ← capability token suffix.
+// The token is the auth: anyone with the URL can track that order;
+// without it, doGet returns NOT_FOUND. Prevents enumeration.
 function generateOrderId() {
   const sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_ORDERS);
   const today = Utilities.formatDate(new Date(), 'Africa/Lagos', 'yyyyMMdd');
@@ -157,7 +160,16 @@ function generateOrderId() {
     const id = data[i][idIdx];
     if (typeof id === 'string' && id.indexOf('NG-' + today) === 0) counter++;
   }
-  return 'NG-' + today + '-' + String(counter + 1).padStart(4, '0');
+  return 'NG-' + today + '-' + String(counter + 1).padStart(4, '0') + '-' + randomToken(6);
+}
+
+const TOKEN_CHARS_GS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function randomToken(len) {
+  let s = '';
+  for (let i = 0; i < len; i++) {
+    s += TOKEN_CHARS_GS.charAt(Math.floor(Math.random() * TOKEN_CHARS_GS.length));
+  }
+  return s;
 }
 
 // ─── Sheet helpers ─────────────────────────────────────────────────
