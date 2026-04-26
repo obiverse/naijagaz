@@ -76,6 +76,22 @@
 
   /* ── Layout ── */
   --content-w: 480px;
+
+  /* ── Sacred Lattice ─────────────────────────────────────
+     Three concentric rings (Adinkrahene — kingship, greatness,
+     firmness of faith) with a four-tick cosmic axis and an
+     ember spark at center. Tiled at 200×200 across surfaces.
+     Authentic to Akan symbology, restrained to ~6% opacity so
+     it lives behind content without competing.
+     ────────────────────────────────────────────────────── */
+  --lattice-cobalt: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><g transform='translate(100,100)' fill='none' stroke='%230B3FE0' stroke-width='0.7'><circle r='44' opacity='0.06'/><circle r='30' opacity='0.08'/><circle r='16' opacity='0.10'/><line x1='-58' y1='0' x2='-48' y2='0' opacity='0.06'/><line x1='48' y1='0' x2='58' y2='0' opacity='0.06'/><line x1='0' y1='-58' x2='0' y2='-48' opacity='0.06'/><line x1='0' y1='48' x2='0' y2='58' opacity='0.06'/><circle r='1.8' fill='%23F97316' stroke='none' opacity='0.55'/></g></svg>");
+
+  /* ── Vesica Grid ─────────────────────────────────────────
+     Almond intersections (vesica piscis — meeting of two
+     worlds, sacred birth) tiled at 80×80 for inner-card
+     watermarks. Used on summary cards and success surfaces.
+     ────────────────────────────────────────────────────── */
+  --vesica-grid: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%230B3FE0' stroke-width='0.5' opacity='0.06'><path d='M 40 30 A 14 14 0 0 1 40 50 A 14 14 0 0 1 40 30 Z'/><circle cx='40' cy='40' r='1.2' fill='%230B3FE0' stroke='none' opacity='0.3'/></g></svg>");
 }
 
 /* ── Reset ── */
@@ -91,7 +107,8 @@ body {
   font-size: var(--fs-body);
   line-height: 1.55;
   color: var(--ink-800);
-  background: var(--ivory);
+  background: var(--lattice-cobalt) 0 0 / 200px 200px, var(--ivory);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
@@ -164,7 +181,10 @@ small { font-size: var(--fs-caption); }
 
 .hero-wrap {
   position: relative;
-  background: var(--grad-hero), var(--ivory);
+  background:
+    var(--grad-hero),
+    var(--lattice-cobalt) 0 0 / 220px 220px,
+    var(--ivory);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -175,8 +195,8 @@ small { font-size: var(--fs-caption); }
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 20% 10%, rgba(11, 63, 224, 0.06) 0%, transparent 35%),
-    radial-gradient(circle at 80% 90%, rgba(249, 115, 22, 0.05) 0%, transparent 40%);
+    radial-gradient(circle at 20% 10%, rgba(11, 63, 224, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(249, 115, 22, 0.07) 0%, transparent 45%);
   pointer-events: none;
 }
 
@@ -734,7 +754,9 @@ fieldset { border: none; padding: 0; margin: 0 0 20px; }
    ════════════════════════════════════════════════ */
 
 .summary {
-  background: var(--paper);
+  background:
+    var(--vesica-grid) 0 0 / 80px 80px,
+    var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
   padding: 22px 24px;
@@ -1077,8 +1099,9 @@ fieldset { border: none; padding: 0; margin: 0 0 20px; }
   justify-content: center;
   text-align: center;
   background:
-    radial-gradient(circle at 50% 30%, rgba(11, 63, 224, 0.12) 0%, transparent 55%),
-    radial-gradient(circle at 50% 80%, rgba(249, 115, 22, 0.10) 0%, transparent 50%),
+    radial-gradient(circle at 50% 30%, rgba(11, 63, 224, 0.14) 0%, transparent 55%),
+    radial-gradient(circle at 50% 80%, rgba(249, 115, 22, 0.12) 0%, transparent 50%),
+    var(--lattice-cobalt) 0 0 / 240px 240px,
     var(--ivory);
   animation: overlay-fade-out 0.6s ease-in 2.4s forwards;
 }

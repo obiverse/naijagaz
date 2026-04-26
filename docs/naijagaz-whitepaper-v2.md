@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.3 |
+| **Version** | 2.4 |
 | **Date** | April 2026 |
 | **Region** | Abuja, Nigeria (Lugbe + Kubwa + Nyanya + Gwarinpa cluster) |
 | **Model** | Asset-light aggregator |
@@ -352,9 +352,31 @@ Time to top up? Reorder in 2 taps: naijagaz.ng/again
 Reply STOP to skip nudges.
 ```
 
-### 10.2 WhatsApp Layer (Operator-driven)
+### 10.2 WhatsApp Layer — The Sticky Channel
 
-For anything the customer replies to, anything that goes wrong, and any high-value customer (3+ orders), the Closer reaches out personally on WhatsApp. **Phase 0 customer service is a person, not a bot.** Build the bot in Phase 1 once you know the top 20 questions.
+WhatsApp is not just for service. It is the **default ordering channel** for repeat customers. The chat list itself becomes the brand surface — every refill cycle we are in their thread, not buried behind a home-screen icon.
+
+The PWA is the front door (discovery, first order, brand). WhatsApp is the kitchen (every order after that). They share one Sheet.
+
+**The dual-mode switch:** the PWA's `Place order` button is governed by `ORDER_MODE` in `docs/config.js`:
+
+| Mode | Behavior | When to use |
+|---|---|---|
+| `'whatsapp'` (default) | Opens WhatsApp with a structured prefilled message. Operator pastes into the Sheet. Zero infrastructure. | Phase 0a, dev, demos, first 50 customers — until the broker is proven |
+| `'broker'` | POSTs to the Apps Script Web App. SMS ladder fires automatically. | Once the broker is deployed (apps-script/README.md) and Termii is wired |
+
+Flipping the switch is a one-line edit. The Wasm core, the Sheet schema, and the operator's workflow do not change.
+
+**WhatsApp phasing:**
+
+| Phase | What ships | Cost | Timing |
+|---|---|---|---|
+| **0a** | Click-to-chat + prefilled order template — operator handles in WhatsApp manually | ₦0 | Today |
+| **0b** | Webhook bot via WhatsApp Cloud API — auto-replies with menu, "Reply 1 to confirm last order", routes novel intents to operator | ~₦0 (Meta free tier ≤1k convos/mo) + ~₦5k/mo Cloud Run | Week 2 of soft launch |
+| **1** | Full bot — natural language ("send 12.5 to my Lugbe place"), payment links via Paystack, status pushed to WhatsApp instead of SMS | Termii cost drops; bot infra ~₦15k/mo | Month 2-3 |
+| **2** | Claude-powered LLM bot — multilingual (English / Pidgin / Hausa / Yoruba), photo OCR for cylinder readings, predictive nudges | ~₦30-50k/mo + Claude API | Month 4+ |
+
+**Phase 0 customer service is still a person, not a bot.** The dual-mode switch lets us scale the front-of-house (PWA → WhatsApp) without scaling the back-of-house (operator + Sheet) until product-market fit is proven.
 
 ### 10.3 The Refill Prediction Engine
 
@@ -803,3 +825,4 @@ For Claude / engineers / operators picking this up cold, in priority order:
 - v2.1: Renamed venture from GasGo to NaijaGaz — more rooted, more local, signals identity in one word
 - v2.2: Fused the OBIVERSE WASM substrate. Stack moved from Next.js/Vercel to static HTML + Rust→Wasm on GitHub Pages, with Apps Script Web App as the Sheets broker. Logic core compiles to a portable artifact that survives the Phase 1 Postgres migration. ₦70k/yr hosting savings reallocated to buffer.
 - v2.3: Added Gwarinpa as the 4th Phase-0 district — denser estate cluster in NW Abuja, complements the Lugbe/Kubwa/Nyanya triangle. Wasm validator, Apps Script broker, and PWA pill grid all updated.
+- v2.4: WhatsApp elevated from service-only channel to **default ordering channel**. The PWA's `Place order` now opens WhatsApp with a structured prefilled message; operator pastes into the Sheet. Switchable via `ORDER_MODE` config. Phase 0a → 0b → 1 → 2 phasing documented in §10.2. Customer-facing tagline softened from "in 90 minutes" to "almost instantly" — the 60-90 min SLA stays in the operator/vendor MoU. Sacred Lattice pattern (Adinkrahene rings + cosmic axis + ember spark) added as a subtle universal background — every Naija home is a hearth.
