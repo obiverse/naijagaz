@@ -20,10 +20,18 @@ export const ORDER_MODE = 'whatsapp';
 // See apps-script/README.md for setup.
 export const BROKER_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 
-// WhatsApp number for ordering & customer service.
+// WhatsApp operator lines — orders are round-robin'd across all entries.
+// Both numbers receive roughly equal share; customer can also tap an
+// "alternate line" link on the success step to reach the other operator.
+//
 // Format: E.164 without the leading '+' for wa.me links.
-// Nigerian line: 0814 965 3044 → E.164: +234 814 965 3044
-export const WHATSAPP_NUMBER = '2348149653044';
+export const WHATSAPP_OPERATORS = [
+  { number: '2348149653044', label: 'NG line', display: '+234 814 965 3044' },
+  { number: '12409750431',   label: 'US line', display: '+1 240 975 0431'   },
+];
+
+// Backward-compat alias — the primary (first) line.
+export const WHATSAPP_NUMBER = WHATSAPP_OPERATORS[0].number;
 export const SUPPORT_WHATSAPP = '+' + WHATSAPP_NUMBER;
 
 // Prefilled blank template for the landing-page "Order on WhatsApp" link.

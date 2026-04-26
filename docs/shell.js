@@ -4,9 +4,26 @@
 // ═══════════════════════════════════════════════
 
 import init, * as core from './pkg/naijagaz_core/naijagaz_core.js';
-import { BROKER_URL, ORDER_MODE, WHATSAPP_NUMBER } from './config.js';
+import { BROKER_URL, ORDER_MODE, WHATSAPP_NUMBER, WHATSAPP_OPERATORS } from './config.js';
 
-export { ORDER_MODE };
+export { ORDER_MODE, WHATSAPP_OPERATORS };
+
+// ── Round-robin operator picker ───────────────────────────
+// Each call returns the next operator in the rotation. Persisted in
+// localStorage so the rotation survives reloads. Returns the full
+// operator object: { number, label, display }.
+export function pickWhatsAppOperator() {
+  if (WHATSAPP_OPERATORS.length === 1) return WHATSAPP_OPERATORS[0];
+  const key = 'naijagaz.op_counter.v1';
+  const i = (Number(localStorage.getItem(key) || '0') + 1) % WHATSAPP_OPERATORS.length;
+  try { localStorage.setItem(key, String(i)); } catch {}
+  return WHATSAPP_OPERATORS[i];
+}
+
+// Return the operator that's NOT the given one (for the "alternate line" button).
+export function alternateOperator(currentNumber) {
+  return WHATSAPP_OPERATORS.find(o => o.number !== currentNumber) || WHATSAPP_OPERATORS[0];
+}
 
 // ── Wasm boot ─────────────────────────────────────
 
@@ -73,10 +90,17 @@ export async function submitOrder(payload) {
 // the originating user gesture (otherwise iOS Safari blocks it). That's why
 // this is a pure URL builder — no DOM side effects.
 //
+// Pass an explicit `operatorNumber` to target a specific line, otherwise
+// the call uses the round-robin pick. Returns { url, operator }.
+//
 const DISTRICT_LABEL = { lugbe: 'Lugbe', kubwa: 'Kubwa', nyanya: 'Nyanya', gwarinpa: 'Gwarinpa' };
 const PAYMENT_LABEL  = { cash: 'Cash', transfer: 'Bank transfer', pos: 'POS' };
 
-export function composeWhatsAppOrderUrl(p) {
+export function composeWhatsAppOrderUrl(p, operatorNumber = null) {
+  const operator = operatorNumber
+    ? (WHATSAPP_OPERATORS.find(o => o.number === operatorNumber) || pickWhatsAppOperator())
+    : pickWhatsAppOperator();
+
   const total = price(p.size);
   const lines = [
     '🔥 NaijaGaz Order',
@@ -92,7 +116,8 @@ export function composeWhatsAppOrderUrl(p) {
   lines.push('');
   lines.push(`Total: ${naira(total)}`);
 
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`;
+  const url = `https://wa.me/${operator.number}?text=${encodeURIComponent(lines.join('\n'))}`;
+  return { url, operator };
 }
 
 export async function fetchOrder(orderId) {

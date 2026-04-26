@@ -95,14 +95,16 @@
 </div>
 
 <script type="module">
-  import { ready, recallLast, promptInstall, haptic } from './shell.js';
-  import { WHATSAPP_NUMBER, WHATSAPP_ORDER_TEMPLATE } from './config.js';
+  import { ready, recallLast, promptInstall, haptic, pickWhatsAppOperator } from './shell.js';
+  import { WHATSAPP_ORDER_TEMPLATE } from './config.js';
 
   await ready;
 
-  // Prefill the WhatsApp order link with a structured template
+  // Round-robin pick: this page's "Order on WhatsApp" CTA hits whichever
+  // operator is next in rotation. Both NG and US lines see roughly equal load.
+  const op = pickWhatsAppOperator();
   document.getElementById('whatsapp-link').href =
-    `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_ORDER_TEMPLATE)}`;
+    `https://wa.me/${op.number}?text=${encodeURIComponent(WHATSAPP_ORDER_TEMPLATE)}`;
   document.getElementById('whatsapp-link').addEventListener('click', () => haptic(12));
 
   // Reorder shortcut visibility
