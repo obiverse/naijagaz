@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Operator · NaijaGaz</title>
+  <meta name="theme-color" content="#0B3FE0">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Ubuntu:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="index.html" class="back" aria-label="Back">←</a>
+    <span class="step-label">Operator</span>
+  </header>
+
+  <main class="container">
+
+    <!-- PIN gate ───────────────────────────────────────── -->
+    <section id="auth-gate" hidden style="text-align: center; padding-top: 32px;">
+      <h1 id="auth-title">Operator login</h1>
+      <p class="muted" id="auth-sub" style="margin-bottom: 28px;">Enter your 4-digit PIN.</p>
+
+      <div class="pin-input">
+        <input id="pin-1" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
+        <input id="pin-2" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
+        <input id="pin-3" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
+        <input id="pin-4" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="off">
+      </div>
+
+      <p id="auth-error" class="field-error" style="margin-top: 16px; min-height: 20px;"></p>
+
+      <p id="auth-skip-row" style="margin-top: 28px;" hidden>
+        <a href="#" class="btn-link" id="auth-skip">Skip — no PIN, just unlock</a>
+      </p>
+      <p id="auth-reset-row" style="margin-top: 28px;" hidden>
+        <a href="#" class="btn-link" id="auth-reset">Forgot PIN — reset</a>
+      </p>
+    </section>
+
+    <!-- Dashboard ───────────────────────────────────────── -->
+    <section id="dashboard" hidden>
+
+      <div class="orders-head">
+        <h1>Today</h1>
+        <button class="btn-link" id="lock-btn" type="button" style="font-size: var(--fs-caption);">Lock 🔒</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <strong id="stat-today-count">—</strong>
+          <span>today</span>
+        </div>
+        <div class="stat">
+          <strong id="stat-today-rev">—</strong>
+          <span>revenue</span>
+        </div>
+        <div class="stat">
+          <strong id="stat-completion">—</strong>
+          <span>delivered</span>
+        </div>
+        <div class="stat">
+          <strong id="stat-week-count">—</strong>
+          <span>this week</span>
+        </div>
+      </div>
+
+      <p class="muted admin-source" id="admin-source-line"></p>
+
+      <div class="filter-section">
+        <div class="filter-row">
+          <span class="filter-label">Status</span>
+          <div class="pill-grid pill-grid-compact" id="status-pills">
+            <button type="button" class="pill pill-sm selected" data-status="">All</button>
+            <button type="button" class="pill pill-sm" data-status="sent">Sent</button>
+            <button type="button" class="pill pill-sm" data-status="CONFIRMED">Confirmed</button>
+            <button type="button" class="pill pill-sm" data-status="PREPARING">Preparing</button>
+            <button type="button" class="pill pill-sm" data-status="OUT_FOR_DELIVERY">Out</button>
+            <button type="button" class="pill pill-sm" data-status="COMPLETED">Done</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">District</span>
+          <div class="pill-grid pill-grid-compact" id="district-filter-pills">
+            <button type="button" class="pill pill-sm selected" data-district="">All</button>
+            <button type="button" class="pill pill-sm" data-district="lugbe">Lugbe</button>
+            <button type="button" class="pill pill-sm" data-district="kubwa">Kubwa</button>
+            <button type="button" class="pill pill-sm" data-district="nyanya">Nyanya</button>
+            <button type="button" class="pill pill-sm" data-district="gwarinpa">Gwarinpa</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-empty" hidden style="text-align: center; padding: 48px 0;">
+        <p class="lede" style="margin-bottom: 8px;">No orders match.</p>
+        <p class="muted">Try widening the filters or refresh.</p>
+      </div>
+
+      <div id="admin-list" class="orders-list"></div>
+
+    </section>
+
+    <!-- Order detail sheet ────────────────────────────── -->
+    <div class="sheet-backdrop" id="detail-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <div class="sheet">
+        <button class="install-close" id="detail-close" aria-label="Close" type="button">×</button>
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <h3 id="detail-title">Order</h3>
+        <p class="sheet-sub" id="detail-time"></p>
+
+        <div class="summary" id="detail-summary"></div>
+
+        <p class="muted" style="margin: 16px 0 8px; font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: 0.06em;">Set status</p>
+        <div class="status-action-grid" id="detail-status-grid"></div>
+
+        <div class="sheet-actions" style="margin-top: 18px;">
+          <a class="btn btn-secondary" id="detail-call" href="#">Call customer</a>
+          <a class="btn btn-secondary" id="detail-whatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn btn-secondary" id="detail-maps" href="#" target="_blank" rel="noopener" hidden>Open in Maps</a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module">
+    import {
+      ready, getHistory, findInHistory, updateInHistory,
+      naira, relativeTime, haptic, toast, track,
+      generateToken
+    } from './shell.js';
+
+    await ready;
+    track('admin_open');
+
+    // ── PIN auth ────────────────────────────────────────
+    const PIN_HASH_KEY = 'naijagaz.admin.pin_hash.v1';
+    const SESSION_UNLOCK_KEY = 'naijagaz.admin.unlocked';
+
+    async function sha256(s) {
+      const buf = new TextEncoder().encode(s);
+      const hash = await crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function isUnlocked() {
+      return sessionStorage.getItem(SESSION_UNLOCK_KEY) === '1';
+    }
+    function setUnlocked() {
+      sessionStorage.setItem(SESSION_UNLOCK_KEY, '1');
+    }
+    function lock() {
+      sessionStorage.removeItem(SESSION_UNLOCK_KEY);
+    }
+    function hasPin() {
+      return !!localStorage.getItem(PIN_HASH_KEY);
+    }
+    async function setPin(pin) {
+      localStorage.setItem(PIN_HASH_KEY, await sha256(pin));
+    }
+    async function verifyPin(pin) {
+      const stored = localStorage.getItem(PIN_HASH_KEY);
+      return stored && stored === await sha256(pin);
+    }
+
+    const pinInputs = [1, 2, 3, 4].map(i => document.getElementById(`pin-${i}`));
+    const authError = document.getElementById('auth-error');
+    const authTitle = document.getElementById('auth-title');
+    const authSub = document.getElementById('auth-sub');
+    const authSkipRow = document.getElementById('auth-skip-row');
+    const authResetRow = document.getElementById('auth-reset-row');
+
+    let pinMode = 'login'; // 'login' | 'create' | 'confirm'
+    let pinFirstAttempt = '';
+
+    async function bootAuth() {
+      if (isUnlocked()) {
+        showDashboard();
+        return;
+      }
+      if (!hasPin()) {
+        // First-run: offer to create or skip
+        pinMode = 'create';
+        authTitle.textContent = 'Set operator PIN';
+        authSub.textContent = 'Pick a 4-digit PIN. Used to lock this dashboard on this device.';
+        authSkipRow.hidden = false;
+      } else {
+        pinMode = 'login';
+        authTitle.textContent = 'Operator login';
+        authSub.textContent = 'Enter your 4-digit PIN.';
+        authResetRow.hidden = false;
+      }
+      document.getElementById('auth-gate').hidden = false;
+      pinInputs[0].focus();
+    }
+
+    pinInputs.forEach((el, i) => {
+      el.addEventListener('input', () => {
+        if (el.value && i < 3) pinInputs[i + 1].focus();
+        if (pinInputs.every(x => x.value)) tryPin(pinInputs.map(x => x.value).join(''));
+      });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !el.value && i > 0) pinInputs[i - 1].focus();
+      });
+    });
+
+    async function tryPin(pin) {
+      authError.textContent = '';
+      if (pinMode === 'create') {
+        pinFirstAttempt = pin;
+        pinMode = 'confirm';
+        authTitle.textContent = 'Confirm PIN';
+        authSub.textContent = 'Enter the same PIN once more.';
+        authSkipRow.hidden = true;
+        clearPin();
+        haptic(8);
+      } else if (pinMode === 'confirm') {
+        if (pin !== pinFirstAttempt) {
+          authError.textContent = 'PINs do not match. Start again.';
+          haptic([60, 40, 60]);
+          pinMode = 'create';
+          pinFirstAttempt = '';
+          authTitle.textContent = 'Set operator PIN';
+          authSub.textContent = 'Pick a 4-digit PIN.';
+          clearPin();
+          return;
+        }
+        await setPin(pin);
+        setUnlocked();
+        haptic([20, 60, 20]);
+        toast('PIN set ✓');
+        showDashboard();
+      } else {
+        if (await verifyPin(pin)) {
+          setUnlocked();
+          haptic([20, 60, 20]);
+          showDashboard();
+        } else {
+          authError.textContent = 'Wrong PIN. Try again.';
+          haptic([60, 40, 60]);
+          clearPin();
+        }
+      }
+    }
+
+    function clearPin() {
+      pinInputs.forEach(el => { el.value = ''; });
+      pinInputs[0].focus();
+    }
+
+    document.getElementById('auth-skip').addEventListener('click', (e) => {
+      e.preventDefault();
+      setUnlocked();
+      showDashboard();
+    });
+
+    document.getElementById('auth-reset').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!confirm('Reset PIN? You will need to set a new one.')) return;
+      localStorage.removeItem(PIN_HASH_KEY);
+      lock();
+      bootAuth();
+    });
+
+    document.getElementById('lock-btn').addEventListener('click', () => {
+      lock();
+      location.reload();
+    });
+
+    // ── Dashboard ──────────────────────────────────────
+    function showDashboard() {
+      document.getElementById('auth-gate').hidden = true;
+      document.getElementById('dashboard').hidden = false;
+      track('admin_unlocked');
+      renderDashboard();
+    }
+
+    const STATUS_LABEL = {
+      sent: 'Sent', NEW: 'Received', CONFIRMED: 'Confirmed', PREPARING: 'Preparing',
+      OUT_FOR_DELIVERY: 'On the way', COMPLETED: 'Delivered',
+      delivered: 'Delivered', CANCELLED: 'Cancelled',
+    };
+    const STATUS_NEXT = {
+      sent:               ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
+      NEW:                ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
+      CONFIRMED:          ['PREPARING', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
+      PREPARING:          ['OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
+      OUT_FOR_DELIVERY:   ['COMPLETED', 'CANCELLED'],
+      COMPLETED:          [],
+      delivered:          [],
+      CANCELLED:          [],
+    };
+    const districtLabel = { lugbe: 'Lugbe', kubwa: 'Kubwa', nyanya: 'Nyanya', gwarinpa: 'Gwarinpa' };
+
+    let filterStatus = '';
+    let filterDistrict = '';
+
+    function renderDashboard() {
+      const all = getHistory();
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const today = all.filter(o => o.timestamp && new Date(o.timestamp).toISOString().slice(0, 10) === todayKey);
+
+      const weekStart = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const week = all.filter(o => o.timestamp && o.timestamp >= weekStart);
+
+      const todayRev = today.reduce((s, o) => s + (o.price || 0), 0);
+      const todayDelivered = today.filter(o => o.status === 'delivered' || o.status === 'COMPLETED').length;
+      const completion = today.length ? Math.round((todayDelivered / today.length) * 100) : 0;
+
+      document.getElementById('stat-today-count').textContent = today.length;
+      document.getElementById('stat-today-rev').textContent = naira(todayRev).replace(/,000$/, 'k').replace(/(\d),(\d{3})$/, '$1.$2k');
+      document.getElementById('stat-completion').textContent = today.length ? `${completion}%` : '—';
+      document.getElementById('stat-week-count').textContent = week.length;
+
+      document.getElementById('admin-source-line').textContent =
+        all.length === 0
+          ? 'No orders on this device yet. Once orders are placed (via PWA or WhatsApp), they appear here.'
+          : `${all.length} total order${all.length === 1 ? '' : 's'} in local history. (Broker mode: future. Local mode: now.)`;
+
+      const list = document.getElementById('admin-list');
+      list.innerHTML = '';
+
+      let filtered = all.slice();
+      if (filterStatus) filtered = filtered.filter(o => (o.status || 'sent') === filterStatus);
+      if (filterDistrict) filtered = filtered.filter(o => o.district === filterDistrict);
+
+      if (filtered.length === 0) {
+        document.getElementById('admin-empty').hidden = false;
+      } else {
+        document.getElementById('admin-empty').hidden = true;
+        filtered.forEach(o => {
+          const card = document.createElement('button');
+          card.className = 'order-card admin-order-card';
+          card.type = 'button';
+
+          const statusKey = o.status || 'sent';
+          const statusClass = statusKey.toLowerCase().replace(/_/g, '-');
+          const statusLabel = STATUS_LABEL[statusKey] || statusKey;
+
+          card.innerHTML = `
+            <div class="order-card-row">
+              <span class="order-status order-status-${statusClass}">${statusLabel}</span>
+              <time class="order-time">${relativeTime(o.timestamp)}</time>
+            </div>
+            <div class="order-card-row order-card-summary">
+              <strong>${o.size}kg · ${naira(o.price || 0)}</strong>
+              <span class="order-district">${districtLabel[o.district] || ''}</span>
+            </div>
+            <div class="order-card-row order-card-foot">
+              <code class="order-id">${o.order_id}</code>
+              <span class="order-customer">${o.name || o.phone || ''}</span>
+            </div>
+          `;
+          card.addEventListener('click', () => openDetail(o.order_id));
+          list.appendChild(card);
+        });
+      }
+    }
+
+    // ── Filters ────────────────────────────────────────
+    function wireFilterPills(container, key) {
+      container.querySelectorAll('.pill').forEach(p => {
+        p.addEventListener('click', () => {
+          container.querySelectorAll('.pill').forEach(x => x.classList.remove('selected'));
+          p.classList.add('selected');
+          if (key === 'status') filterStatus = p.dataset.status;
+          if (key === 'district') filterDistrict = p.dataset.district;
+          haptic(8);
+          renderDashboard();
+        });
+      });
+    }
+    wireFilterPills(document.getElementById('status-pills'), 'status');
+    wireFilterPills(document.getElementById('district-filter-pills'), 'district');
+
+    // ── Detail sheet ───────────────────────────────────
+    let _currentDetailId = null;
+
+    function openDetail(orderId) {
+      const o = findInHistory(orderId);
+      if (!o) return;
+      _currentDetailId = orderId;
+      track('admin_detail_open', { order_id: orderId });
+
+      document.getElementById('detail-title').textContent =
+        `${o.size}kg · ${naira(o.price || 0)}`;
+      document.getElementById('detail-time').textContent = relativeTime(o.timestamp);
+
+      const safe = (s) => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      document.getElementById('detail-summary').innerHTML = `
+        <div class="summary-row"><span class="label">Customer</span><span class="value">${safe(o.name) || '<em class="muted">no name</em>'}</span></div>
+        <div class="summary-row"><span class="label">Phone</span><span class="value">${safe(o.phone)}</span></div>
+        <div class="summary-row"><span class="label">District</span><span class="value">${districtLabel[o.district] || ''}</span></div>
+        <div class="summary-row"><span class="label">Address</span><span class="value">${safe(o.address)}${o.landmark ? '<br><small class="muted">' + safe(o.landmark) + '</small>' : ''}</span></div>
+        ${o.gps_lat ? `<div class="summary-row"><span class="label">GPS</span><span class="value"><code style="font-size:12px;">${o.gps_lat.toFixed(5)}, ${o.gps_lng.toFixed(5)}</code></span></div>` : ''}
+        <div class="summary-row"><span class="label">Payment</span><span class="value">${o.payment || ''} on delivery</span></div>
+        <div class="summary-row"><span class="label">Source</span><span class="value">${o.mode === 'whatsapp' ? 'WhatsApp · ' + (o.operator || '') : 'Broker'}</span></div>
+        <div class="summary-row"><span class="label">Order ID</span><span class="value"><code style="font-size:11px;">${o.order_id}</code></span></div>
+      `;
+
+      // Status action buttons
+      const grid = document.getElementById('detail-status-grid');
+      grid.innerHTML = '';
+      const next = STATUS_NEXT[o.status || 'sent'] || [];
+      if (next.length === 0) {
+        grid.innerHTML = '<p class="muted" style="font-size: var(--fs-body-sm);">Order is in a terminal state.</p>';
+      } else {
+        next.forEach(status => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn btn-secondary status-action-btn';
+          btn.textContent = `→ ${STATUS_LABEL[status] || status}`;
+          if (status === 'COMPLETED') btn.classList.add('status-action-positive');
+          if (status === 'CANCELLED') btn.classList.add('status-action-negative');
+          btn.addEventListener('click', () => updateStatus(orderId, status));
+          grid.appendChild(btn);
+        });
+      }
+
+      // Customer contact actions
+      document.getElementById('detail-call').href = o.phone ? 'tel:' + o.phone : '#';
+      document.getElementById('detail-whatsapp').href = o.phone
+        ? `https://wa.me/${o.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(`NaijaGaz: about your ${o.size}kg order ${o.order_id}`)}`
+        : '#';
+      const mapsLink = document.getElementById('detail-maps');
+      if (o.gps_lat && o.gps_lng) {
+        mapsLink.href = `https://www.google.com/maps?q=${o.gps_lat},${o.gps_lng}`;
+        mapsLink.hidden = false;
+      } else {
+        mapsLink.hidden = true;
+      }
+
+      const sheet = document.getElementById('detail-sheet');
+      sheet.hidden = false;
+    }
+
+    function closeDetail() {
+      const sheet = document.getElementById('detail-sheet');
+      sheet.classList.add('closing');
+      setTimeout(() => { sheet.hidden = true; sheet.classList.remove('closing'); }, 280);
+    }
+    document.getElementById('detail-close').addEventListener('click', closeDetail);
+    document.getElementById('detail-sheet').addEventListener('click', (e) => {
+      if (e.target.id === 'detail-sheet') closeDetail();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !document.getElementById('detail-sheet').hidden) closeDetail();
+    });
+
+    function updateStatus(orderId, newStatus) {
+      updateInHistory(orderId, {
+        status: newStatus,
+        ...(newStatus === 'COMPLETED' || newStatus === 'delivered' ? { delivered_at: Date.now() } : {}),
+      });
+      track('admin_status_update', { order_id: orderId, status: newStatus });
+      haptic([20, 40, 20]);
+      toast(`Updated → ${STATUS_LABEL[newStatus] || newStatus}`);
+      renderDashboard();
+      openDetail(orderId);
+    }
+
+    // ── Boot ──
+    bootAuth();
+  </script>
+
+</body>
+</html>

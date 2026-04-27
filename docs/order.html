@@ -52,6 +52,13 @@
       </div>
       <label class="field">
         <span>Address</span>
+        <button type="button" id="gps-btn" class="gps-button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2L9.91 8.91L3 9.27l5.45 4.97L7.36 21L12 17.27L16.64 21l-1.09-6.76L21 9.27l-6.91-.36z" opacity="0.2"/>
+            <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0 6a2 2 0 110-4 2 2 0 010 4zm0-12C7.03 2 3 6.03 3 11c0 6.75 9 11 9 11s9-4.25 9-11c0-4.97-4.03-9-9-9zm0 18.71c-1.79-1.32-7-5.4-7-9.71 0-3.86 3.14-7 7-7s7 3.14 7 7c0 4.31-5.21 8.39-7 9.71z"/>
+          </svg>
+          <span id="gps-btn-text">Use my location</span>
+        </button>
         <textarea id="f-address" rows="3" placeholder="Estate / street / house number" required></textarea>
       </label>
       <label class="field">
@@ -171,7 +178,8 @@
     // ── State ──
     const state = Object.assign({
       size: '', district: '', address: '', landmark: '',
-      phone: '', name: '', payment: 'cash', step: 1,
+      phone: '', name: '', payment: 'cash',
+      gps_lat: null, gps_lng: null, step: 1,
     }, loadDraft());
 
     // ── Render cylinder size cards from Wasm catalog ──
@@ -257,6 +265,46 @@
       r.addEventListener('change', e => { state.payment = e.target.value; saveDraft(state); })
     );
 
+    // ── GPS auto-locate (Geolocation API) ──
+    const gpsBtn = document.getElementById('gps-btn');
+    const gpsText = document.getElementById('gps-btn-text');
+    if (state.gps_lat && state.gps_lng) {
+      gpsBtn.classList.add('captured');
+      gpsText.textContent = `Location captured (${state.gps_lat.toFixed(4)}, ${state.gps_lng.toFixed(4)})`;
+    }
+    gpsBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        flashError(null, 'Location not available on this device');
+        return;
+      }
+      gpsBtn.disabled = true;
+      gpsText.textContent = 'Getting your location…';
+      haptic(8);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          state.gps_lat = pos.coords.latitude;
+          state.gps_lng = pos.coords.longitude;
+          saveDraft(state);
+          gpsBtn.classList.add('captured');
+          gpsBtn.disabled = false;
+          gpsText.textContent = `Location captured (${state.gps_lat.toFixed(4)}, ${state.gps_lng.toFixed(4)})`;
+          haptic([20, 30, 20]);
+          track('gps_captured');
+        },
+        (err) => {
+          gpsBtn.disabled = false;
+          gpsText.textContent = 'Use my location';
+          flashError(null,
+            err.code === 1 ? 'Location permission denied — please type the address.' :
+            err.code === 2 ? 'Could not find location — please type the address.' :
+            'Location request timed out — please type the address.'
+          );
+          track('gps_error', { code: err.code });
+        },
+        { enableHighAccuracy: true, timeout: 12_000, maximumAge: 60_000 }
+      );
+    });
+
     // ── Validation (Wasm-backed) ──
     function validateStep2() {
       if (!districtOk(state.district)) {
@@ -327,6 +375,7 @@
         size: state.size, district: state.district,
         address: state.address, landmark: state.landmark,
         phone: state.phone, name: state.name, payment: state.payment,
+        gps_lat: state.gps_lat, gps_lng: state.gps_lng,
       };
 
       // ── Mode 1: WhatsApp (default — Phase 0a, no infra) ──
@@ -350,6 +399,8 @@
           phone: state.phone,
           name: state.name,
           payment: state.payment,
+          gps_lat: state.gps_lat,
+          gps_lng: state.gps_lng,
           mode: 'whatsapp',
           operator: primary.label,
           timestamp: Date.now(),

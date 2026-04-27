@@ -34,6 +34,11 @@ const ALLOWED_PAYMENTS  = ['cash', 'transfer', 'pos'];
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
+
+    // Admin actions are routed by `action` field; require ADMIN_SECRET.
+    if (body.action === 'update_status') return adminUpdateStatus(body);
+    if (body.action === 'event')         return adminLogEvent(body);
+
     const v = validateOrder(body);
     if (!v.ok) return jsonResponse({ ok: false, error: v.error });
 
@@ -69,6 +74,12 @@ function doPost(e) {
 }
 
 function doGet(e) {
+  const action = (e.parameter || {}).action || 'get';
+  if (action === 'list') return adminListOrders(e);
+  return getOrderPublic(e);
+}
+
+function getOrderPublic(e) {
   const id = (e.parameter || {}).id;
   if (!id) return jsonResponse({ ok: false, error: 'NO_ID' });
   const row = findOrder(id);
@@ -85,6 +96,95 @@ function doGet(e) {
     dispatched_at:  row.dispatched_at,
     delivered_at:   row.delivered_at,
   });
+}
+
+// ─── Admin endpoints ───────────────────────────────────────────────
+//
+// Both gated by ADMIN_SECRET (Script Property). The /admin.html PIN
+// hashes to a separate ADMIN_PIN_HASH; this server-side secret is the
+// actual authorization for fetching the full sheet or mutating status.
+//
+// Set both via Project Settings → Script Properties:
+//   ADMIN_SECRET     — long random string, ships in admin.html via prompt
+//   ADMIN_PIN_HASH   — sha256 of the operator PIN (optional; client also hashes)
+
+function adminListOrders(e) {
+  const secret = props().getProperty('ADMIN_SECRET');
+  if (!secret || (e.parameter || {}).secret !== secret) {
+    return jsonResponse({ ok: false, error: 'UNAUTHORIZED' });
+  }
+  const sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_ORDERS);
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return jsonResponse({ ok: true, orders: [] });
+  const header = data[0];
+  let orders = data.slice(1).map(row => {
+    const obj = {};
+    header.forEach((h, i) => { obj[h] = row[i]; });
+    return obj;
+  });
+  // Filter by date if provided (yyyy-MM-dd format)
+  const date = e.parameter.date;
+  if (date) {
+    orders = orders.filter(o => String(o.created_at || '').slice(0, 10) === date);
+  }
+  return jsonResponse({ ok: true, orders: orders, count: orders.length });
+}
+
+function adminUpdateStatus(body) {
+  const secret = props().getProperty('ADMIN_SECRET');
+  if (!secret || body.secret !== secret) {
+    return jsonResponse({ ok: false, error: 'UNAUTHORIZED' });
+  }
+  if (!body.order_id || !body.status) {
+    return jsonResponse({ ok: false, error: 'BAD_BODY' });
+  }
+  const sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_ORDERS);
+  const data = sheet.getDataRange().getValues();
+  const header = data[0];
+  const idIdx = header.indexOf('order_id');
+  const statusIdx = header.indexOf('status');
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][idIdx] === body.order_id) {
+      sheet.getRange(i + 1, statusIdx + 1).setValue(body.status);
+      if (body.status === 'OUT_FOR_DELIVERY') {
+        const dispatchedIdx = header.indexOf('dispatched_at');
+        if (dispatchedIdx >= 0) sheet.getRange(i + 1, dispatchedIdx + 1).setValue(new Date().toISOString());
+      }
+      if (body.status === 'COMPLETED') {
+        const deliveredIdx = header.indexOf('delivered_at');
+        if (deliveredIdx >= 0) sheet.getRange(i + 1, deliveredIdx + 1).setValue(new Date().toISOString());
+      }
+      // onStatusChange trigger fires via spreadsheet edit → SMS ladder
+      return jsonResponse({ ok: true, order_id: body.order_id, status: body.status });
+    }
+  }
+  return jsonResponse({ ok: false, error: 'NOT_FOUND' });
+}
+
+// Optional: drain client analytics queue to a SHEET_EVENTS tab.
+// Tab is created on first event; no auth required (events are non-sensitive).
+function adminLogEvent(body) {
+  if (!body || !body.events || !Array.isArray(body.events)) {
+    return jsonResponse({ ok: false, error: 'BAD_BODY' });
+  }
+  const ss = SpreadsheetApp.getActive();
+  let sheet = ss.getSheetByName('events');
+  if (!sheet) {
+    sheet = ss.insertSheet('events');
+    sheet.appendRow(['ts', 'name', 'session', 'state', 'page', 'referrer', 'props']);
+  }
+  body.events.forEach(ev => {
+    sheet.appendRow([
+      new Date(ev.ts || Date.now()),
+      ev.name || '',
+      ev.session || '',
+      ev.state || '',
+      ev.page || '',
+      ev.referrer || '',
+      JSON.stringify(ev.props || {}),
+    ]);
+  });
+  return jsonResponse({ ok: true, count: body.events.length });
 }
 
 // ─── Triggers (set up via Edit > Triggers in the Apps Script editor) ───
