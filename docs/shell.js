@@ -654,6 +654,298 @@ export function haptic(pattern = 12) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// i18n — language strings (EN + PCM Naija Pidgin)
+//
+// Phase 1 coverage: top user-facing strings. All marked at the source
+// with `data-i18n="key"` (HTML) or `t('key')` (JS). Adding more keys
+// is purely additive; missing keys fall back to EN, then to the key
+// itself, so partial coverage is safe.
+// ═══════════════════════════════════════════════════════════════════
+
+const STRINGS = {
+  en: {
+    // Landing
+    'hero.h1':              'Cooking gas, almost instantly.',
+    'hero.lede':            'Tap, confirm, pay on delivery. No queues. No guessing prices.',
+    'cta.order':            'Order gas',
+    'cta.whatsapp':         'Order on WhatsApp',
+    'cta.reorder':          '↻ Reorder your last cylinder',
+    'cta.your_orders':      '📋 Your orders',
+    'cta.track':            'Track an order →',
+    'or':                   'or',
+    'footer.districts':     'LUGBE · KUBWA · NYANYA · GWARINPA',
+    'footer.install':       '📱 Install app',
+    'footer.operator':      'Operator',
+    'footer.settings':      'Settings',
+
+    // Greetings
+    'greet.welcome_back':   'Welcome back.',
+    'greet.morning':        'Good morning 👋',
+    'greet.evening':        'Good evening 👋',
+    'greet.welcome_warm':   'Welcome back 👋',
+    'greet.continue':       'Pick up where you left off?',
+    'greet.refill_ready':   'Ready for your next refill?',
+    'greet.refill_overdue': "It's been a while. Time for a refill?",
+
+    // Order flow
+    'step.size':            'Pick a cylinder size',
+    'step.size.sub':        'Choose what fits your kitchen.',
+    'step.address':         'Where to deliver?',
+    'step.address.sub':     'A clear address gets the rider to you faster.',
+    'step.contact':         'How can we reach you?',
+    'step.contact.sub':     "For SMS updates and the rider's call.",
+    'step.confirm':         'Confirm your order',
+    'step.confirm.sub':     'Review, then place it.',
+    'field.district':       'District',
+    'field.address':        'Address',
+    'field.address.ph':     'Estate / street / house number',
+    'field.landmark':       'Landmark',
+    'field.optional':       '(optional)',
+    'field.landmark.ph':    'Near the mosque, by the school…',
+    'field.phone':          'Phone number',
+    'field.phone.ph':       '0801 234 5678',
+    'field.name':           'Your name',
+    'field.name.ph':        'Aisha',
+    'gps.use':              'Use my location',
+    'gps.getting':          'Getting your location…',
+    'gps.captured':         'Location captured',
+    'payment.legend':       'Payment on delivery',
+    'payment.cash':         'Cash',
+    'payment.transfer':     'Bank transfer',
+    'payment.pos':          'POS',
+    'btn.back':             'Back',
+    'btn.continue':         'Continue',
+    'btn.place_order':      'Place order',
+
+    // Success
+    'success.title':        'Order sent 🔥',
+    'success.sub':          'Send to both operators so the first available picks it up.',
+    'success.share':        'Share with a friend ↗',
+    'success.back_home':    '← Back to home',
+    'success.install':      'Install NaijaGaz',
+    'success.install.sub':  'One-tap reorders next time',
+
+    // Track
+    'track.label':          'Tracking',
+    'track.banner.received':'Order received',
+    'track.banner.confirmed':'Confirmed ✓',
+    'track.banner.preparing':'Being prepared 🔥',
+    'track.banner.out':     'On the way 🏍️',
+    'track.banner.delivered':'Delivered ✨',
+    'track.timeline.received':'Received',
+    'track.timeline.confirmed':'Confirmed',
+    'track.timeline.preparing':'Preparing',
+    'track.timeline.out':   'On the way',
+    'track.timeline.delivered':'Delivered',
+    'track.mark_delivered': 'Mark as delivered ✓',
+    'track.share':          'Share tracking link ↗',
+    'track.all_orders':     '📋 All your orders',
+    'track.home':           'Home',
+
+    // Orders
+    'orders.title':         'Your orders',
+    'orders.new':           '+ New order',
+    'orders.empty':         'No orders yet.',
+    'orders.empty.cta':     'Place your first order →',
+
+    // Reorder
+    'reorder.welcome':      'Welcome back 👋',
+    'reorder.intro_loading':'Loading your last order…',
+    'reorder.again':        'Place this order again',
+    'reorder.change':       'Change something',
+    'reorder.empty':        "No previous order on this device. Let's start fresh.",
+
+    // Settings
+    'settings.title':       'Settings',
+    'settings.appearance':  'APPEARANCE',
+    'settings.theme':       'Theme',
+    'settings.theme.system':'System',
+    'settings.theme.light': 'Light',
+    'settings.theme.dark':  'Dark',
+    'settings.language':    'Language',
+    'settings.data':        'YOUR DATA',
+    'settings.orders_saved':'Orders saved',
+    'settings.events_saved':'Events recorded',
+    'settings.export_orders':'Export orders',
+    'settings.export_events':'Export events',
+    'settings.clear_history':'Clear order history',
+    'settings.clear_events': 'Clear events',
+    'settings.app':         'APP',
+    'settings.status':      'Status',
+    'settings.version':     'Version',
+    'settings.connection':  'Connection',
+    'settings.online':      '✓ Online',
+    'settings.offline':     'Offline',
+    'settings.installed':   '✓ Installed',
+    'settings.not_installed':'Not installed',
+    'settings.install_now': 'Install now',
+    'settings.about':       'ABOUT',
+    'settings.support':     'Support',
+    'settings.whitepaper':  'Read the whitepaper',
+  },
+
+  pcm: {
+    // Landing
+    'hero.h1':              'Cooking gas, sharp sharp.',
+    'hero.lede':            'Tap, confirm, pay when e reach you. No queue. No estimate price wahala.',
+    'cta.order':            'Order gas',
+    'cta.whatsapp':         'Order for WhatsApp',
+    'cta.reorder':          '↻ Order last cylinder again',
+    'cta.your_orders':      '📋 Your orders',
+    'cta.track':            'Track your order →',
+    'or':                   'abi',
+    'footer.districts':     'LUGBE · KUBWA · NYANYA · GWARINPA',
+    'footer.install':       '📱 Install the app',
+    'footer.operator':      'Operator',
+    'footer.settings':      'Settings',
+
+    // Greetings
+    'greet.welcome_back':   'Welcome back.',
+    'greet.morning':        'Morning o 👋',
+    'greet.evening':        'Good evening 👋',
+    'greet.welcome_warm':   'How far 👋',
+    'greet.continue':       'You wan finish your last order?',
+    'greet.refill_ready':   'Time to fuel your next cylinder?',
+    'greet.refill_overdue': 'E don tey o. Time to fuel?',
+
+    // Order flow
+    'step.size':            'Choose your cylinder size',
+    'step.size.sub':        'Pick wetin go fit your kitchen.',
+    'step.address':         'Where we go bring am?',
+    'step.address.sub':     'Clear address go help the rider find you sharp.',
+    'step.contact':         'How we go take call you?',
+    'step.contact.sub':     "For SMS updates and the rider's call.",
+    'step.confirm':         'Confirm your order',
+    'step.confirm.sub':     'Check am, then place am.',
+    'field.district':       'District',
+    'field.address':        'Address',
+    'field.address.ph':     'Estate / street / house number',
+    'field.landmark':       'Landmark',
+    'field.optional':       '(no be must)',
+    'field.landmark.ph':    'Near the mosque, by the school…',
+    'field.phone':          'Phone number',
+    'field.phone.ph':       '0801 234 5678',
+    'field.name':           'Your name',
+    'field.name.ph':        'Aisha',
+    'gps.use':              'Use my location',
+    'gps.getting':          'Getting your location…',
+    'gps.captured':         'Location don catch',
+    'payment.legend':       'How you wan pay (on delivery)',
+    'payment.cash':         'Cash',
+    'payment.transfer':     'Transfer',
+    'payment.pos':          'POS',
+    'btn.back':             'Back',
+    'btn.continue':         'Continue',
+    'btn.place_order':      'Place order',
+
+    // Success
+    'success.title':        'Order don go 🔥',
+    'success.sub':          'Send am to both operators — the first wey free go pick am up.',
+    'success.share':        'Tell a friend ↗',
+    'success.back_home':    '← Back to home',
+    'success.install':      'Install NaijaGaz',
+    'success.install.sub':  'One-tap reorder next time',
+
+    // Track
+    'track.label':          'Tracking',
+    'track.banner.received':'Order don land',
+    'track.banner.confirmed':'Don confirm ✓',
+    'track.banner.preparing':'Dem dey prepare am 🔥',
+    'track.banner.out':     'E dey come 🏍️',
+    'track.banner.delivered':'Don deliver ✨',
+    'track.timeline.received':'Don land',
+    'track.timeline.confirmed':'Don confirm',
+    'track.timeline.preparing':'Dey prepare',
+    'track.timeline.out':   'E dey road',
+    'track.timeline.delivered':'Don deliver',
+    'track.mark_delivered': 'Mark as delivered ✓',
+    'track.share':          'Share tracking link ↗',
+    'track.all_orders':     '📋 All your orders',
+    'track.home':           'Home',
+
+    // Orders
+    'orders.title':         'Your orders',
+    'orders.new':           '+ New order',
+    'orders.empty':         'No order yet.',
+    'orders.empty.cta':     'Place your first order →',
+
+    // Reorder
+    'reorder.welcome':      'Welcome back 👋',
+    'reorder.intro_loading':'Loading your last order…',
+    'reorder.again':        'Order this thing again',
+    'reorder.change':       'Change something',
+    'reorder.empty':        'No previous order on this device. Make we start fresh.',
+
+    // Settings
+    'settings.title':       'Settings',
+    'settings.appearance':  'APPEARANCE',
+    'settings.theme':       'Theme',
+    'settings.theme.system':'System',
+    'settings.theme.light': 'Light',
+    'settings.theme.dark':  'Dark',
+    'settings.language':    'Language',
+    'settings.data':        'YOUR DATA',
+    'settings.orders_saved':'Orders saved',
+    'settings.events_saved':'Events recorded',
+    'settings.export_orders':'Export orders',
+    'settings.export_events':'Export events',
+    'settings.clear_history':'Clear order history',
+    'settings.clear_events': 'Clear events',
+    'settings.app':         'APP',
+    'settings.status':      'Status',
+    'settings.version':     'Version',
+    'settings.connection':  'Connection',
+    'settings.online':      '✓ Online',
+    'settings.offline':     'Offline',
+    'settings.installed':   '✓ Installed',
+    'settings.not_installed':'Not installed',
+    'settings.install_now': 'Install now',
+    'settings.about':       'ABOUT',
+    'settings.support':     'Support',
+    'settings.whitepaper':  'Read the whitepaper',
+  },
+};
+
+const LANG_KEY = 'naijagaz.lang.v1';
+export const LANGUAGES = [
+  { code: 'en',  label: 'English',           native: 'English' },
+  { code: 'pcm', label: 'Nigerian Pidgin',   native: 'Naija Pidgin' },
+];
+
+export function getLang() {
+  const stored = localStorage.getItem(LANG_KEY);
+  if (stored && STRINGS[stored]) return stored;
+  // Auto-detect from browser; default to English
+  const nav = (navigator.language || 'en').toLowerCase();
+  if (nav.startsWith('pcm') || nav === 'en-ng') return 'pcm';
+  return 'en';
+}
+
+export function setLang(code) {
+  if (!STRINGS[code]) return;
+  try { localStorage.setItem(LANG_KEY, code); } catch {}
+  applyI18n();
+  document.documentElement.lang = code === 'pcm' ? 'pcm' : 'en';
+  document.dispatchEvent(new CustomEvent('naijagaz:lang', { detail: { code } }));
+}
+
+export function t(key, lang = getLang()) {
+  return (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.en[key] || key;
+}
+
+export function applyI18n(root = document) {
+  root.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (!key) return;
+    const value = t(key);
+    // attribute targeting: data-i18n-attr="placeholder" → set placeholder; default sets textContent
+    const attr = el.dataset.i18nAttr;
+    if (attr) el.setAttribute(attr, value);
+    else el.textContent = value;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // CAPABILITY TOKENS — order_id includes a crypto-random suffix
 //
 // NG-20260427-0001-A7F2K3  ← the token
@@ -871,6 +1163,9 @@ export function toast(msg, ms = 2200) {
 // ── Boot the auto-injected widgets ────────────────────────
 
 function bootWidgets() {
+  // i18n FIRST so subsequent widgets/text render in chosen language
+  applyI18n();
+  document.documentElement.lang = getLang() === 'pcm' ? 'pcm' : 'en';
   injectThemeToggle();
   injectConnectivityPip();
   injectInstallSheet();

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Settings · NaijaGaz</title>
+  <meta name="theme-color" content="#0B3FE0">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Ubuntu:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="index.html" class="back" aria-label="Back">←</a>
+    <span class="step-label" data-i18n="settings.title">Settings</span>
+  </header>
+
+  <main class="container">
+
+    <!-- APPEARANCE ─────────────────────────────────── -->
+    <section class="settings-section">
+      <h3 class="settings-h" data-i18n="settings.appearance">APPEARANCE</h3>
+      <div class="settings-card">
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.theme">Theme</span>
+          <div class="settings-segmented" id="theme-seg">
+            <button data-theme-set="system" type="button" data-i18n="settings.theme.system">System</button>
+            <button data-theme-set="light" type="button" data-i18n="settings.theme.light">Light</button>
+            <button data-theme-set="dark" type="button" data-i18n="settings.theme.dark">Dark</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.language">Language</span>
+          <div class="settings-segmented" id="lang-seg"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA ──────────────────────────────────────── -->
+    <section class="settings-section">
+      <h3 class="settings-h" data-i18n="settings.data">YOUR DATA</h3>
+      <div class="settings-card">
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.orders_saved">Orders saved</span>
+          <span class="settings-value" id="data-orders-count">—</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.events_saved">Events recorded</span>
+          <span class="settings-value" id="data-events-count">—</span>
+        </div>
+        <div class="settings-actions">
+          <button class="btn btn-secondary" id="export-orders" type="button" data-i18n="settings.export_orders">Export orders</button>
+          <button class="btn btn-secondary" id="export-events" type="button" data-i18n="settings.export_events">Export events</button>
+          <button class="btn btn-secondary danger" id="clear-history" type="button" data-i18n="settings.clear_history">Clear order history</button>
+          <button class="btn btn-secondary danger" id="clear-events" type="button" data-i18n="settings.clear_events">Clear events</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- APP ──────────────────────────────────────── -->
+    <section class="settings-section">
+      <h3 class="settings-h" data-i18n="settings.app">APP</h3>
+      <div class="settings-card">
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.status">Status</span>
+          <span class="settings-value" id="app-install-status">—</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.version">Version</span>
+          <span class="settings-value mono" id="app-version">—</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">Cache</span>
+          <span class="settings-value mono" id="app-cache">—</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.connection">Connection</span>
+          <span class="settings-value" id="app-online">—</span>
+        </div>
+        <div class="settings-actions" id="app-actions"></div>
+      </div>
+    </section>
+
+    <!-- ABOUT ────────────────────────────────────── -->
+    <section class="settings-section">
+      <h3 class="settings-h" data-i18n="settings.about">ABOUT</h3>
+      <div class="settings-card">
+        <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+          <span class="settings-value" style="font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">naijagaz</span>
+          <span class="settings-label" id="about-tagline">Cooking gas, almost instantly.</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.support">Support</span>
+          <a class="settings-value link mono" href="tel:+2348149653044">+234 814 965 3044</a>
+        </div>
+        <div class="settings-actions">
+          <a class="btn btn-secondary" id="about-whatsapp" href="#" target="_blank" rel="noopener">Open in WhatsApp ↗</a>
+          <a class="btn btn-secondary" href="naijagaz-whitepaper-v2.md" target="_blank" rel="noopener" data-i18n="settings.whitepaper">Read the whitepaper</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module">
+    import {
+      ready, getTheme, setTheme, getEffectiveTheme,
+      getLang, setLang, t, applyI18n, LANGUAGES,
+      getHistory, clearHistory, getEvents, clearEvents, exportEvents,
+      isInstalled, isInstallable, isOnline, openInstallSheet, naira, haptic, toast, track
+    } from './shell.js';
+    import { SUPPORT_WHATSAPP } from './config.js';
+
+    await ready;
+    track('settings_open');
+
+    // ── Appearance: theme ──
+    function refreshThemeSeg() {
+      const cur = getTheme();
+      document.querySelectorAll('#theme-seg button').forEach(b => {
+        b.classList.toggle('selected', b.dataset.themeSet === cur);
+      });
+    }
+    document.querySelectorAll('#theme-seg button').forEach(b => {
+      b.addEventListener('click', () => {
+        setTheme(b.dataset.themeSet);
+        haptic(8);
+        refreshThemeSeg();
+      });
+    });
+    refreshThemeSeg();
+
+    // ── Appearance: language ──
+    const langSeg = document.getElementById('lang-seg');
+    LANGUAGES.forEach(l => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.langSet = l.code;
+      b.textContent = l.native;
+      b.addEventListener('click', () => {
+        setLang(l.code);
+        haptic(8);
+        refreshLangSeg();
+        refreshDataCounts(); // labels may have changed
+        renderAppSection();
+      });
+      langSeg.appendChild(b);
+    });
+    function refreshLangSeg() {
+      const cur = getLang();
+      document.querySelectorAll('#lang-seg button').forEach(b => {
+        b.classList.toggle('selected', b.dataset.langSet === cur);
+      });
+    }
+    refreshLangSeg();
+
+    // ── Data ──
+    function refreshDataCounts() {
+      document.getElementById('data-orders-count').textContent = getHistory().length;
+      document.getElementById('data-events-count').textContent = getEvents().length;
+    }
+    refreshDataCounts();
+
+    function downloadJson(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    document.getElementById('export-orders').addEventListener('click', () => {
+      downloadJson(`naijagaz-orders-${new Date().toISOString().slice(0, 10)}.json`, getHistory());
+      track('export_orders');
+      toast('Exported');
+    });
+    document.getElementById('export-events').addEventListener('click', () => {
+      downloadJson(`naijagaz-events-${new Date().toISOString().slice(0, 10)}.json`, getEvents());
+      track('export_events');
+      toast('Exported');
+    });
+    document.getElementById('clear-history').addEventListener('click', () => {
+      if (!confirm('Clear all order history on this device? Cannot be undone.')) return;
+      clearHistory();
+      try { localStorage.removeItem('naijagaz.last.v1'); } catch {}
+      refreshDataCounts();
+      toast('History cleared');
+    });
+    document.getElementById('clear-events').addEventListener('click', () => {
+      if (!confirm('Clear all analytics events on this device?')) return;
+      clearEvents();
+      refreshDataCounts();
+      toast('Events cleared');
+    });
+
+    // ── App section ──
+    async function fetchSwCacheName() {
+      try {
+        const txt = await fetch('./sw.js?_=' + Date.now()).then(r => r.text());
+        const m = txt.match(/const\s+CACHE\s*=\s*'([^']+)'/);
+        return m ? m[1] : '—';
+      } catch { return '—'; }
+    }
+
+    function renderAppSection() {
+      document.getElementById('app-install-status').textContent =
+        isInstalled() ? t('settings.installed') : t('settings.not_installed');
+      document.getElementById('app-online').textContent =
+        isOnline() ? t('settings.online') : t('settings.offline');
+      document.getElementById('app-version').textContent = '1.0.0';
+
+      const actions = document.getElementById('app-actions');
+      actions.innerHTML = '';
+      if (!isInstalled()) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-flame';
+        b.textContent = t('settings.install_now');
+        b.addEventListener('click', () => openInstallSheet());
+        actions.appendChild(b);
+      }
+      const reload = document.createElement('button');
+      reload.type = 'button';
+      reload.className = 'btn btn-secondary';
+      reload.textContent = 'Check for updates';
+      reload.addEventListener('click', async () => {
+        if (navigator.serviceWorker) {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg) await reg.update();
+        }
+        toast('Checking…');
+      });
+      actions.appendChild(reload);
+    }
+    renderAppSection();
+    fetchSwCacheName().then(name => {
+      document.getElementById('app-cache').textContent = name;
+    });
+    window.addEventListener('online',  renderAppSection);
+    window.addEventListener('offline', renderAppSection);
+
+    // ── About ──
+    document.getElementById('about-whatsapp').href = `https://wa.me/${SUPPORT_WHATSAPP.replace(/[^\d]/g, '')}`;
+    document.getElementById('about-tagline').textContent = t('hero.h1');
+
+    document.addEventListener('naijagaz:lang', () => {
+      // i18n already applied by shell; refresh dynamic-rendered values
+      renderAppSection();
+      document.getElementById('about-tagline').textContent = t('hero.h1');
+    });
+  </script>
+
+</body>
+</html>

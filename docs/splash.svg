@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1170 2532" preserveAspectRatio="xMidYMid slice" width="1170" height="2532">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B3FE0"/>
+      <stop offset="0.55" stop-color="#1E1B4B"/>
+      <stop offset="1" stop-color="#0A0F1F"/>
+    </linearGradient>
+    <radialGradient id="emberGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#F97316" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="lattice" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+      <g transform="translate(100,100)" fill="none" stroke="#FFFFFF" stroke-width="0.7">
+        <circle r="44" opacity="0.06"/>
+        <circle r="30" opacity="0.08"/>
+        <circle r="16" opacity="0.10"/>
+        <circle r="2" fill="#F97316" stroke="none" opacity="0.5"/>
+      </g>
+    </pattern>
+  </defs>
+
+  <rect width="1170" height="2532" fill="url(#bg)"/>
+  <rect width="1170" height="2532" fill="url(#lattice)"/>
+  <ellipse cx="585" cy="1100" rx="500" ry="500" fill="url(#emberGlow)"/>
+
+  <!-- Mark — vesica flame at center -->
+  <g transform="translate(381, 906)">
+    <path fill-rule="evenodd" fill="#FFFFFF" d="
+      M 204 48 a 156 156 0 1 0 0 312 a 156 156 0 1 0 0 -312 Z
+      M 204 102 A 128 128 0 0 1 204 306 A 128 128 0 0 1 204 102 Z
+    "/>
+    <circle cx="204" cy="204" r="9" fill="#F97316"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="585" y="1430" text-anchor="middle" fill="#FFFFFF"
+        font-family="Outfit, 'Helvetica Neue', sans-serif" font-size="116" font-weight="800" letter-spacing="-3">naijagaz</text>
+
+  <!-- Tagline -->
+  <text x="585" y="1490" text-anchor="middle" fill="#FFFFFF" fill-opacity="0.78"
+        font-family="Outfit, 'Helvetica Neue', sans-serif" font-size="34" font-weight="500">Cooking gas, almost instantly.</text>
+</svg>

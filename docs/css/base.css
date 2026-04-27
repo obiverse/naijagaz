@@ -1573,6 +1573,106 @@ fieldset { border: none; padding: 0; margin: 0 0 20px; }
 .gps-button[disabled] { opacity: 0.6; cursor: not-allowed; }
 
 /* ════════════════════════════════════════════════
+   SETTINGS PAGE
+   ════════════════════════════════════════════════ */
+
+.settings-section { margin-bottom: 28px; }
+.settings-h {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  color: var(--ink-500);
+  text-transform: uppercase;
+  margin: 0 0 10px 4px;
+}
+.settings-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  gap: 14px;
+  border-bottom: 1px solid var(--line-2);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-label {
+  font-size: var(--fs-body-sm);
+  color: var(--ink-600);
+  font-weight: 500;
+}
+.settings-value {
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  color: var(--ink-900);
+  text-align: right;
+}
+.settings-value.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+.settings-value.link {
+  color: var(--cobalt-600);
+  text-decoration: none;
+}
+.settings-value.link:hover { text-decoration: underline; }
+
+.settings-segmented {
+  display: inline-flex;
+  background: var(--ivory);
+  padding: 3px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  gap: 0;
+}
+.settings-segmented button {
+  border: none;
+  background: transparent;
+  color: var(--ink-600);
+  font-family: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.05s;
+  white-space: nowrap;
+}
+.settings-segmented button:active { transform: scale(0.96); }
+.settings-segmented button.selected {
+  background: var(--paper);
+  color: var(--cobalt-700);
+  box-shadow: var(--sh-sm);
+}
+
+.settings-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  background: var(--paper-2);
+  border-top: 1px solid var(--line-2);
+}
+.settings-actions .btn {
+  font-size: var(--fs-caption);
+  padding: 10px 12px;
+}
+.settings-actions .btn.danger {
+  color: var(--warn);
+  border-color: rgba(220, 38, 38, 0.2);
+}
+.settings-actions .btn.danger:hover {
+  background: rgba(220, 38, 38, 0.06);
+  border-color: var(--warn);
+}
+
+/* ════════════════════════════════════════════════
    APP UPDATE TOAST — when SW finds a newer version
    ════════════════════════════════════════════════ */
 

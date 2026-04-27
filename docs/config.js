@@ -16,9 +16,17 @@
 //
 export const ORDER_MODE = 'whatsapp';
 
-// ── Broker URL (used only when ORDER_MODE === 'broker') ──
+// ── Broker URL (used when ORDER_MODE === 'broker' OR by /admin.html) ──
 // See apps-script/README.md for setup.
 export const BROKER_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+// ── Admin secret — paste here AFTER setting Script Property ADMIN_SECRET ──
+// When set, /admin.html switches from local-only mode to broker mode:
+// reads all orders from the sheet, mutates statuses via the broker.
+// Treat this like a low-grade password — anyone with this string +
+// the broker URL can read and mutate orders. Don't commit a real value
+// to a public repo; rotate by changing the Script Property.
+export const ADMIN_SECRET = '';
 
 // WhatsApp operator lines — every order is sent to ALL non-primary
 // operators as well, so both NG and US lines see every order. The
