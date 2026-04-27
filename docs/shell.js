@@ -413,14 +413,59 @@ function injectInstallSheet() {
         <button class="btn btn-flame" id="install-trigger" type="button">Install NaijaGaz</button>
       </div>
 
-      <!-- iOS Safari -->
+      <!-- iOS Safari — visual gesture guide.
+           Apple has no install API; the manual gesture is the only path.
+           We make it as visual as possible. -->
       <div class="install-body" id="install-body-ios" hidden>
-        <p class="install-pitch">Two taps to add NaijaGaz to your home screen:</p>
-        <ol class="install-steps">
-          <li><span class="step-n">1</span><span>Tap the <strong>Share</strong> button ${SHARE_ICON_SVG} at the bottom of Safari</span></li>
-          <li><span class="step-n">2</span><span>Scroll down and tap <strong>Add to Home Screen</strong> ${ADD_ICON_SVG}</span></li>
-          <li><span class="step-n">3</span><span>Tap <strong>Add</strong> in the top-right corner</span></li>
+        <p class="install-pitch">iOS doesn't allow apps to install themselves — Apple's rule. But this is quick:</p>
+
+        <!-- Animated illustration: Safari's bottom toolbar with Share highlighted -->
+        <div class="ios-illustration" aria-hidden="true">
+          <svg viewBox="0 0 320 130" xmlns="http://www.w3.org/2000/svg">
+            <!-- Pulse glow under share button -->
+            <circle cx="160" cy="92" r="22" fill="#0B3FE0" opacity="0.18">
+              <animate attributeName="r"       values="18;28;18" dur="1.6s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.18;0.05;0.18" dur="1.6s" repeatCount="indefinite"/>
+            </circle>
+
+            <!-- Mock Safari toolbar -->
+            <rect x="20" y="68" width="280" height="48" rx="14"
+                  fill="var(--paper)" stroke="var(--line)" stroke-width="1.5"/>
+
+            <!-- Toolbar icons (back, forward, share, bookmark, tabs) -->
+            <text x="58"  y="98" text-anchor="middle" fill="var(--ink-400)" font-size="22" font-family="-apple-system, sans-serif">‹</text>
+            <text x="105" y="98" text-anchor="middle" fill="var(--ink-400)" font-size="22" font-family="-apple-system, sans-serif">›</text>
+
+            <!-- Highlighted Share icon (centered + emphasized) -->
+            <g transform="translate(150, 78)">
+              <rect x="-14" y="-2" width="28" height="32" rx="6" fill="var(--cobalt-50)" stroke="var(--cobalt-600)" stroke-width="2"/>
+              <path d="M 0 4 L 0 22 M -6 10 L 0 4 L 6 10 M -8 18 L -8 26 L 8 26 L 8 18"
+                    fill="none" stroke="var(--cobalt-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+
+            <text x="207" y="98" text-anchor="middle" fill="var(--ink-400)" font-size="20" font-family="-apple-system, sans-serif">📑</text>
+            <text x="252" y="98" text-anchor="middle" fill="var(--ink-400)" font-size="20" font-family="-apple-system, sans-serif">⊞</text>
+
+            <!-- Down arrow pointing at Share -->
+            <path d="M 160 28 L 160 60 M 154 54 L 160 60 L 166 54"
+                  fill="none" stroke="var(--ember-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="1.6s" repeatCount="indefinite"/>
+            </path>
+
+            <text x="160" y="22" text-anchor="middle" fill="var(--ember-500)"
+                  font-family="Outfit, sans-serif" font-weight="700" font-size="14" letter-spacing="-0.3">
+              Tap Share
+            </text>
+          </svg>
+        </div>
+
+        <ol class="install-steps install-steps-tight">
+          <li><span class="step-n">1</span><span>Tap <strong>Share</strong> at the bottom of Safari</span></li>
+          <li><span class="step-n">2</span><span>Scroll → <strong>Add to Home Screen</strong></span></li>
+          <li><span class="step-n">3</span><span>Tap <strong>Add</strong></span></li>
         </ol>
+
+        <button class="btn btn-flame" id="install-ios-got-it" type="button" style="margin-top: 18px;">Got it</button>
       </div>
 
       <!-- Desktop browsers without beforeinstallprompt API -->
@@ -454,6 +499,11 @@ function injectInstallSheet() {
       closeInstallSheet();
       toast('We will not bug you for 14 days');
     }
+  });
+
+  document.getElementById('install-ios-got-it')?.addEventListener('click', () => {
+    haptic(8);
+    closeInstallSheet();
   });
 }
 
@@ -492,17 +542,64 @@ function closeInstallSheet() {
 function maybeAutoShow() {
   if (!shouldAutoShowInstall()) return;
   try { sessionStorage.setItem(SESSION_SHOWN_KEY, '1'); } catch {}
-  // Wait until the page is settled — don't fight a hero animation
-  setTimeout(openInstallSheet, 1500);
+
+  // Wait until the page is settled — don't fight the hero animation
+  setTimeout(async () => {
+    // Android fast-path: fire the native prompt directly. The
+    // browser's own UI is the cleanest possible install affordance —
+    // skipping our sheet means truly 1-tap (just the native Install
+    // button). On dismissal, mark dismissed so we honor the cooldown.
+    if (isInstallable() && !isIOS()) {
+      haptic([15, 30, 15]);
+      track('install_auto_prompt_native');
+      try {
+        const r = await promptInstall();
+        if (r.outcome === 'dismissed') {
+          dismissInstallPrompt();
+          track('install_dismissed_native', { surface: 'auto' });
+        } else if (r.outcome === 'accepted') {
+          haptic([20, 60, 20]);
+        }
+      } catch {
+        openInstallSheet(); // safety net
+      }
+      return;
+    }
+
+    // iOS: there's no install API on Apple's platform; show our sheet
+    // with the visual gesture guide.
+    openInstallSheet();
+  }, 1500);
 }
 
-// Wire any [data-install] element to open the sheet
+// Wire any [data-install] element. ANDROID FAST-PATH: if the browser
+// captured a beforeinstallprompt, fire the native dialog directly —
+// no sheet detour. The native dialog IS the explanation. Sheet is
+// reserved for iOS (no API exists) and desktop browsers without one.
 function wireInstallButtons() {
   document.querySelectorAll('[data-install]').forEach(el => {
     if (el._installWired) return;
     el._installWired = true;
-    el.addEventListener('click', (e) => {
+    el.addEventListener('click', async (e) => {
       e.preventDefault();
+      track('install_click', { surface: el.dataset.installSurface || 'unknown' });
+
+      // Fast path: native prompt available → fire it (1 tap, no sheet)
+      if (isInstallable()) {
+        haptic(8);
+        const r = await promptInstall();
+        if (r.outcome === 'accepted') {
+          haptic([20, 60, 20]);
+          // appinstalled event fires the toast
+        } else if (r.outcome === 'dismissed') {
+          dismissInstallPrompt();
+          track('install_dismissed_native');
+        }
+        return;
+      }
+
+      // Slow path: iOS Safari (no API) or desktop without API → show
+      // the install sheet which has platform-detected instructions.
       openInstallSheet();
     });
   });
