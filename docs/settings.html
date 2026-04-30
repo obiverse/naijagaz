@@ -41,6 +41,18 @@
       </div>
     </section>
 
+    <!-- ADDRESSES ────────────────────────────────── -->
+    <section class="settings-section">
+      <h3 class="settings-h" data-i18n="addr.title">SAVED ADDRESSES</h3>
+      <div class="settings-card" id="addresses-card">
+        <p class="muted" id="addresses-empty" style="padding: 16px 18px; margin: 0;" data-i18n="addr.empty">No saved addresses yet. Add one to skip the address step next time.</p>
+        <div id="addresses-list"></div>
+        <div class="settings-actions" style="grid-template-columns: 1fr;">
+          <button class="btn btn-secondary" id="add-address" type="button" data-i18n="addr.add">+ Add address</button>
+        </div>
+      </div>
+    </section>
+
     <!-- DATA ──────────────────────────────────────── -->
     <section class="settings-section">
       <h3 class="settings-h" data-i18n="settings.data">YOUR DATA</h3>
@@ -52,6 +64,10 @@
         <div class="settings-row">
           <span class="settings-label" data-i18n="settings.events_saved">Events recorded</span>
           <span class="settings-value" id="data-events-count">—</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.addresses_saved">Saved addresses</span>
+          <span class="settings-value" id="data-addrs-count">—</span>
         </div>
         <div class="settings-actions">
           <button class="btn btn-secondary" id="export-orders" type="button" data-i18n="settings.export_orders">Export orders</button>
@@ -81,6 +97,13 @@
         <div class="settings-row">
           <span class="settings-label" data-i18n="settings.connection">Connection</span>
           <span class="settings-value" id="app-online">—</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label" data-i18n="settings.broker">Broker</span>
+          <span class="settings-value" id="app-broker">
+            <span class="broker-pip broker-pip-checking" id="broker-status-pip"></span>
+            <span id="broker-status-text" data-i18n="settings.broker.checking">Checking…</span>
+          </span>
         </div>
         <div class="settings-actions" id="app-actions"></div>
       </div>
@@ -112,7 +135,8 @@
       ready, getTheme, setTheme, getEffectiveTheme,
       getLang, setLang, t, applyI18n, LANGUAGES,
       getHistory, clearHistory, getEvents, clearEvents, exportEvents,
-      isInstalled, isInstallable, isOnline, openInstallSheet, naira, haptic, toast, track
+      isInstalled, isInstallable, isOnline, openInstallSheet, naira, haptic, toast, track,
+      getAddresses, addAddress, removeAddress, setDefaultAddress, pingBroker
     } from './shell.js';
     import { SUPPORT_WHATSAPP } from './config.js';
 
@@ -163,8 +187,81 @@
     function refreshDataCounts() {
       document.getElementById('data-orders-count').textContent = getHistory().length;
       document.getElementById('data-events-count').textContent = getEvents().length;
+      document.getElementById('data-addrs-count').textContent = getAddresses().length;
     }
     refreshDataCounts();
+
+    // ── Address book ──
+    const districtLabel = { lugbe: 'Lugbe', kubwa: 'Kubwa', nyanya: 'Nyanya', gwarinpa: 'Gwarinpa' };
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function renderAddresses() {
+      const list = getAddresses();
+      const container = document.getElementById('addresses-list');
+      const empty = document.getElementById('addresses-empty');
+      container.innerHTML = '';
+      if (list.length === 0) { empty.hidden = false; return; }
+      empty.hidden = true;
+      list.forEach(a => {
+        const row = document.createElement('div');
+        row.className = 'addr-row';
+        const label = a.label || districtLabel[a.district] || 'Saved';
+        row.innerHTML = `
+          <div class="addr-info">
+            <strong>${escapeHtml(label)}${a.is_default ? '<span class="addr-default-badge">' + t('addr.default').toUpperCase() + '</span>' : ''}</strong>
+            <small>${escapeHtml(a.address)}${a.landmark ? ' · ' + escapeHtml(a.landmark) : ''}</small>
+            <small style="color: var(--ink-400);">${districtLabel[a.district] || ''}</small>
+          </div>
+          <div class="addr-actions">
+            ${!a.is_default ? `<button data-make-default="${a.id}">${t('addr.set_default')}</button>` : ''}
+            <button class="danger" data-delete="${a.id}">${t('addr.delete')}</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+      container.querySelectorAll('[data-make-default]').forEach(b => {
+        b.addEventListener('click', () => {
+          setDefaultAddress(b.dataset.makeDefault);
+          renderAddresses();
+          haptic(8);
+          track('addr_default_set');
+        });
+      });
+      container.querySelectorAll('[data-delete]').forEach(b => {
+        b.addEventListener('click', () => {
+          if (!confirm(t('addr.confirm_delete'))) return;
+          removeAddress(b.dataset.delete);
+          renderAddresses();
+          refreshDataCounts();
+          haptic([20, 30, 20]);
+          track('addr_deleted');
+        });
+      });
+    }
+    renderAddresses();
+
+    document.getElementById('add-address').addEventListener('click', () => {
+      const label = (prompt(t('addr.label.ph'), '') || '').trim().slice(0, 40);
+      if (!label) return;
+      const district = (prompt('District (lugbe / kubwa / nyanya / gwarinpa):', 'lugbe') || '').trim().toLowerCase();
+      if (!['lugbe', 'kubwa', 'nyanya', 'gwarinpa'].includes(district)) {
+        toast('Invalid district');
+        return;
+      }
+      const address = (prompt('Address (estate / street / house number):', '') || '').trim();
+      if (!address) return;
+      const landmark = (prompt('Landmark (optional):', '') || '').trim();
+      const a = addAddress({
+        label, district, address, landmark,
+        is_default: getAddresses().length === 0,
+      });
+      renderAddresses();
+      refreshDataCounts();
+      haptic([20, 40, 20]);
+      track('addr_added', { id: a.id });
+      toast('Saved');
+    });
 
     function downloadJson(filename, data) {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -242,6 +339,26 @@
     });
     window.addEventListener('online',  renderAppSection);
     window.addEventListener('offline', renderAppSection);
+
+    // ── Broker status ──
+    async function refreshBrokerStatus() {
+      const pip = document.getElementById('broker-status-pip');
+      const txt = document.getElementById('broker-status-text');
+      pip.className = 'broker-pip broker-pip-checking';
+      txt.textContent = t('settings.broker.checking');
+      const r = await pingBroker();
+      pip.className = 'broker-pip broker-pip-' + r.status;
+      const KEY = {
+        unconfigured: 'settings.broker.unconfigured',
+        online:       'settings.broker.online',
+        offline:      'settings.broker.offline',
+      };
+      txt.textContent = t(KEY[r.status] || 'settings.broker.unconfigured');
+      if (r.status === 'online' && r.version) {
+        txt.textContent += ` · ${r.version}`;
+      }
+    }
+    refreshBrokerStatus();
 
     // ── About ──
     document.getElementById('about-whatsapp').href = `https://wa.me/${SUPPORT_WHATSAPP.replace(/[^\d]/g, '')}`;

@@ -17,24 +17,24 @@
 
   <header class="topbar">
     <a href="index.html" class="back" aria-label="Back">←</a>
-    <span class="step-label">Reorder</span>
+    <span class="step-label" data-i18n="cta.reorder">Reorder</span>
   </header>
 
   <main class="container">
-    <h1 style="margin-bottom: 12px;">Welcome back 👋</h1>
-    <p class="muted" id="intro" style="margin-bottom: 28px;">Loading your last order…</p>
+    <h1 style="margin-bottom: 12px;" data-i18n="reorder.welcome">Welcome back 👋</h1>
+    <p class="muted" id="intro" style="margin-bottom: 28px;" data-i18n="reorder.intro_loading">Loading your last order…</p>
 
     <div class="summary" id="last-summary" hidden></div>
 
     <div id="actions" hidden style="margin-top: 20px;">
-      <a class="btn btn-flame" href="order.html" id="reorder-btn">Place this order again</a>
-      <a class="btn btn-secondary" href="order.html" style="margin-top: 12px;" id="change-btn">Change something</a>
+      <a class="btn btn-flame" href="order.html" id="reorder-btn" data-i18n="reorder.again">Place this order again</a>
+      <a class="btn btn-secondary" href="order.html" style="margin-top: 12px;" id="change-btn" data-i18n="reorder.change">Change something</a>
       <a class="btn-link" href="orders.html" id="all-orders-link" hidden style="display: block; text-align: center; margin-top: 16px;">View all your orders →</a>
     </div>
 
     <div id="empty" hidden style="text-align: center; padding-top: 24px;">
-      <p class="lede" style="margin-bottom: 24px;">No previous order on this device. Let's start fresh.</p>
-      <a href="order.html" class="btn btn-flame">Order gas</a>
+      <p class="lede" style="margin-bottom: 24px;" data-i18n="reorder.empty">No previous order on this device. Let's start fresh.</p>
+      <a href="order.html" class="btn btn-flame" data-i18n="cta.order">Order gas</a>
     </div>
   </main>
 

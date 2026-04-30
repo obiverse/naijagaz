@@ -18,7 +18,8 @@
 
   <header class="topbar">
     <a href="index.html" class="back" aria-label="Back">←</a>
-    <span class="step-label">Operator</span>
+    <span class="step-label" data-i18n="admin.label">Operator</span>
+    <span id="broker-pip" class="broker-pip broker-pip-unconfigured" title="Broker status">·</span>
   </header>
 
   <main class="container">
@@ -134,11 +135,22 @@
     import {
       ready, getHistory, findInHistory, updateInHistory,
       naira, relativeTime, haptic, toast, track,
-      generateToken
+      generateToken, pingBroker, t
     } from './shell.js';
 
     await ready;
     track('admin_open');
+
+    // Broker status pip in topbar
+    (async () => {
+      const pip = document.getElementById('broker-pip');
+      pip.className = 'broker-pip broker-pip-checking';
+      const r = await pingBroker();
+      pip.className = 'broker-pip broker-pip-' + r.status;
+      pip.title = r.status === 'online' ? `Broker ${r.version || ''}` :
+                  r.status === 'offline' ? 'Broker unreachable' :
+                  'Broker not configured (local mode)';
+    })();
 
     // ── PIN auth ────────────────────────────────────────
     const PIN_HASH_KEY = 'naijagaz.admin.pin_hash.v1';

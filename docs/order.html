@@ -31,18 +31,25 @@
 
     <!-- ── Step 1: cylinder size ─────────────────── -->
     <section class="step" data-step="1">
-      <h2>Pick a cylinder size</h2>
-      <p class="muted" style="margin-bottom: 24px;">Choose what fits your kitchen.</p>
+      <h2 data-i18n="step.size">Pick a cylinder size</h2>
+      <p class="muted" style="margin-bottom: 24px;" data-i18n="step.size.sub">Choose what fits your kitchen.</p>
       <div class="size-grid" id="size-grid"></div>
     </section>
 
     <!-- ── Step 2: address ─────────────────────────── -->
     <section class="step" data-step="2" hidden>
-      <h2>Where to deliver?</h2>
-      <p class="muted" style="margin-bottom: 24px;">A clear address gets the rider to you faster.</p>
+      <h2 data-i18n="step.address">Where to deliver?</h2>
+      <p class="muted" style="margin-bottom: 18px;" data-i18n="step.address.sub">A clear address gets the rider to you faster.</p>
+
+      <!-- Saved-address quick-pick (hidden when none) -->
+      <div id="saved-addr-row" hidden style="margin-bottom: 18px;">
+        <p class="muted" style="font-size: var(--fs-caption); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 8px;" data-i18n="addr.pick">Use a saved address</p>
+        <div class="address-chips" id="saved-addr-chips"></div>
+        <p class="muted" style="font-size: var(--fs-caption); margin: 10px 0 0;" data-i18n="addr.or_new">or type a new one below</p>
+      </div>
 
       <div class="field">
-        <span>District</span>
+        <span data-i18n="field.district">District</span>
         <div class="pill-grid" id="district-pills" role="radiogroup" aria-label="District">
           <button type="button" class="pill" data-district="lugbe"    role="radio" aria-checked="false">Lugbe</button>
           <button type="button" class="pill" data-district="kubwa"    role="radio" aria-checked="false">Kubwa</button>
@@ -51,70 +58,70 @@
         </div>
       </div>
       <label class="field">
-        <span>Address</span>
+        <span data-i18n="field.address">Address</span>
         <button type="button" id="gps-btn" class="gps-button">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2L9.91 8.91L3 9.27l5.45 4.97L7.36 21L12 17.27L16.64 21l-1.09-6.76L21 9.27l-6.91-.36z" opacity="0.2"/>
             <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0 6a2 2 0 110-4 2 2 0 010 4zm0-12C7.03 2 3 6.03 3 11c0 6.75 9 11 9 11s9-4.25 9-11c0-4.97-4.03-9-9-9zm0 18.71c-1.79-1.32-7-5.4-7-9.71 0-3.86 3.14-7 7-7s7 3.14 7 7c0 4.31-5.21 8.39-7 9.71z"/>
           </svg>
-          <span id="gps-btn-text">Use my location</span>
+          <span id="gps-btn-text" data-i18n="gps.use">Use my location</span>
         </button>
-        <textarea id="f-address" rows="3" placeholder="Estate / street / house number" required></textarea>
+        <textarea id="f-address" rows="3" required data-i18n="field.address.ph" data-i18n-attr="placeholder" placeholder="Estate / street / house number"></textarea>
       </label>
       <label class="field">
-        <span>Landmark <small class="muted">(optional)</small></span>
-        <input id="f-landmark" type="text" placeholder="Near the mosque, by the school…" autocomplete="off">
+        <span><span data-i18n="field.landmark">Landmark</span> <small class="muted" data-i18n="field.optional">(optional)</small></span>
+        <input id="f-landmark" type="text" autocomplete="off" data-i18n="field.landmark.ph" data-i18n-attr="placeholder" placeholder="Near the mosque, by the school…">
       </label>
       <div class="actions">
-        <button class="btn btn-secondary" data-back>Back</button>
-        <button class="btn btn-primary" data-next>Continue</button>
+        <button class="btn btn-secondary" data-back data-i18n="btn.back">Back</button>
+        <button class="btn btn-primary" data-next data-i18n="btn.continue">Continue</button>
       </div>
     </section>
 
     <!-- ── Step 3: phone + payment ─────────────────── -->
     <section class="step" data-step="3" hidden>
-      <h2>How can we reach you?</h2>
-      <p class="muted" style="margin-bottom: 24px;">For SMS updates and the rider's call.</p>
+      <h2 data-i18n="step.contact">How can we reach you?</h2>
+      <p class="muted" style="margin-bottom: 24px;" data-i18n="step.contact.sub">For SMS updates and the rider's call.</p>
 
       <div class="field" id="phone-field">
-        <span>Phone number</span>
+        <span data-i18n="field.phone">Phone number</span>
         <div class="input-with-flag">
           <span class="flag-tag" aria-hidden="true">🇳🇬 NG</span>
-          <input id="f-phone" type="tel" inputmode="tel" placeholder="0801 234 5678" autocomplete="tel" required>
+          <input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" required data-i18n="field.phone.ph" data-i18n-attr="placeholder" placeholder="0801 234 5678">
         </div>
       </div>
       <label class="field">
-        <span>Your name <small class="muted">(optional)</small></span>
-        <input id="f-name" type="text" autocomplete="given-name" placeholder="Aisha">
+        <span><span data-i18n="field.name">Your name</span> <small class="muted" data-i18n="field.optional">(optional)</small></span>
+        <input id="f-name" type="text" autocomplete="given-name" data-i18n="field.name.ph" data-i18n-attr="placeholder" placeholder="Aisha">
       </label>
       <fieldset class="field">
-        <legend>Payment on delivery</legend>
+        <legend data-i18n="payment.legend">Payment on delivery</legend>
         <label class="radio">
-          <input type="radio" name="payment" value="cash" checked> <span>Cash</span>
+          <input type="radio" name="payment" value="cash" checked> <span data-i18n="payment.cash">Cash</span>
         </label>
         <label class="radio">
-          <input type="radio" name="payment" value="transfer"> <span>Bank transfer</span>
+          <input type="radio" name="payment" value="transfer"> <span data-i18n="payment.transfer">Bank transfer</span>
         </label>
         <label class="radio">
-          <input type="radio" name="payment" value="pos"> <span>POS</span>
+          <input type="radio" name="payment" value="pos"> <span data-i18n="payment.pos">POS</span>
         </label>
       </fieldset>
       <div class="actions">
-        <button class="btn btn-secondary" data-back>Back</button>
-        <button class="btn btn-primary" data-next>Continue</button>
+        <button class="btn btn-secondary" data-back data-i18n="btn.back">Back</button>
+        <button class="btn btn-primary" data-next data-i18n="btn.continue">Continue</button>
       </div>
     </section>
 
     <!-- ── Step 4: confirm ─────────────────────────── -->
     <section class="step" data-step="4" hidden>
-      <h2>Confirm your order</h2>
-      <p class="muted" style="margin-bottom: 20px;">Review, then place it.</p>
+      <h2 data-i18n="step.confirm">Confirm your order</h2>
+      <p class="muted" style="margin-bottom: 20px;" data-i18n="step.confirm.sub">Review, then place it.</p>
 
       <div class="summary" id="summary"></div>
 
       <div class="actions">
-        <button class="btn btn-secondary" data-back>Back</button>
-        <button class="btn btn-flame" id="submit-btn">Place order</button>
+        <button class="btn btn-secondary" data-back data-i18n="btn.back">Back</button>
+        <button class="btn btn-flame" id="submit-btn" data-i18n="btn.place_order">Place order</button>
       </div>
       <p id="submit-status" class="status-text" style="margin-top: 16px;"></p>
     </section>
@@ -137,13 +144,23 @@
         </svg>
         <img src="icon.svg" class="success-flame" alt="">
       </div>
-      <h2 class="success-title" style="margin-bottom: 14px;" id="success-headline">Order sent 🔥</h2>
+      <h2 class="success-title" style="margin-bottom: 14px;" id="success-headline" data-i18n="success.title">Order sent 🔥</h2>
       <p class="success-id" id="success-summary">—</p>
-      <p class="success-sub">Send to both operators so the first available picks it up.</p>
+      <p class="success-sub" data-i18n="success.sub">Send to both operators so the first available picks it up.</p>
       <div id="op-cta-stack" style="display: grid; gap: 12px; margin-top: 28px;"></div>
 
+      <!-- Save this address — only when the order address is novel -->
+      <div class="install-card" id="save-address-card" hidden style="margin-top: 18px;">
+        <span class="install-card-icon">📍</span>
+        <div class="install-card-body">
+          <p data-i18n="addr.save_prompt">Save this address for next time?</p>
+          <small id="save-address-preview"></small>
+        </div>
+        <button id="save-address-yes" type="button" data-i18n="addr.save_yes">Save it</button>
+      </div>
+
       <!-- Web Share button — surfaces only when navigator.share is available -->
-      <button class="btn btn-secondary" id="share-btn" type="button" hidden style="margin-top: 14px;">
+      <button class="btn btn-secondary" id="share-btn" type="button" hidden style="margin-top: 14px;" data-i18n="success.share">
         Share with a friend ↗
       </button>
 
@@ -157,7 +174,7 @@
         <button data-install type="button">Install</button>
       </div>
 
-      <a href="index.html" class="btn-link" style="display:block; text-align:center; margin-top: 14px;">← Back to home</a>
+      <a href="index.html" class="btn-link" style="display:block; text-align:center; margin-top: 14px;" data-i18n="success.back_home">← Back to home</a>
     </section>
 
   </main>
@@ -169,17 +186,26 @@
       ORDER_MODE, composeWhatsAppOrderUrl, composeAllOperatorUrls,
       primaryOperator, WHATSAPP_GROUP_INVITE,
       isInstalled, isInstallable, isIOS, trackEngagement,
-      generateToken, track, canShare, shareOrder
+      generateToken, track, canShare, shareOrder,
+      getAddresses, addAddress, defaultAddress, isAddressNovel, t
     } from './shell.js';
 
     await ready;
     track('order_page_open');
 
     // ── State ──
+    // Pre-fill from default saved address when available (powerful UX:
+    // a returning customer with a default address skips most of step 2).
+    const _def = defaultAddress();
     const state = Object.assign({
-      size: '', district: '', address: '', landmark: '',
+      size: '',
+      district: _def?.district || '',
+      address:  _def?.address  || '',
+      landmark: _def?.landmark || '',
       phone: '', name: '', payment: 'cash',
-      gps_lat: null, gps_lng: null, step: 1,
+      gps_lat: _def?.gps_lat || null,
+      gps_lng: _def?.gps_lng || null,
+      step: 1,
     }, loadDraft());
 
     // ── Render cylinder size cards from Wasm catalog ──
@@ -264,6 +290,50 @@
     document.querySelectorAll('input[name="payment"]').forEach(r =>
       r.addEventListener('change', e => { state.payment = e.target.value; saveDraft(state); })
     );
+
+    // ── Saved address quick-pick chips ──
+    const saved = getAddresses();
+    if (saved.length > 0) {
+      const row = document.getElementById('saved-addr-row');
+      const chips = document.getElementById('saved-addr-chips');
+      saved.forEach(a => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'address-chip' + (a.is_default ? ' is-default' : '');
+        chip.innerHTML = `
+          <strong>${escapeHtml(a.label || (districtLabel[a.district] || 'Saved'))}</strong>
+          <small>${escapeHtml((a.address || '').slice(0, 40))}${(a.address || '').length > 40 ? '…' : ''}</small>
+        `;
+        chip.addEventListener('click', () => {
+          state.district = a.district;
+          state.address = a.address;
+          state.landmark = a.landmark || '';
+          state.gps_lat = a.gps_lat || null;
+          state.gps_lng = a.gps_lng || null;
+          $('f-address').value = state.address;
+          $('f-landmark').value = state.landmark;
+          document.querySelectorAll('#district-pills .pill').forEach(p => {
+            p.classList.toggle('selected', p.dataset.district === state.district);
+            p.setAttribute('aria-checked', String(p.dataset.district === state.district));
+          });
+          if (state.gps_lat) {
+            const gpsBtnLocal = document.getElementById('gps-btn');
+            const gpsTextLocal = document.getElementById('gps-btn-text');
+            gpsBtnLocal.classList.add('captured');
+            gpsTextLocal.textContent = `${t('gps.captured')} (${state.gps_lat.toFixed(4)}, ${state.gps_lng.toFixed(4)})`;
+          }
+          saveDraft(state);
+          haptic(8);
+          track('addr_picker_used', { id: a.id });
+        });
+        chips.appendChild(chip);
+      });
+      row.hidden = false;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
 
     // ── GPS auto-locate (Geolocation API) ──
     const gpsBtn = document.getElementById('gps-btn');
@@ -424,6 +494,31 @@
             const trackUrl = location.origin + location.pathname.replace(/order\.html$/, 'track.html') + '?id=' + encodeURIComponent(localId);
             shareOrder(`I just ordered ${state.size}kg of cooking gas on NaijaGaz — almost instantly!`, trackUrl);
           }, { once: false });
+        }
+
+        // Offer to save this address if novel (post-success, no friction
+        // mid-flow). Tap "Save it" → adds to address book; the next
+        // order pre-fills automatically.
+        if (isAddressNovel(payload)) {
+          const card = document.getElementById('save-address-card');
+          const preview = document.getElementById('save-address-preview');
+          preview.textContent = (payload.address || '').slice(0, 60) + ((payload.address || '').length > 60 ? '…' : '');
+          card.hidden = false;
+          document.getElementById('save-address-yes').addEventListener('click', () => {
+            const label = (prompt('Label this address (e.g. Home, Office):', '') || '').trim().slice(0, 40);
+            const a = addAddress({
+              label,
+              district: payload.district,
+              address: payload.address,
+              landmark: payload.landmark,
+              gps_lat: payload.gps_lat,
+              gps_lng: payload.gps_lng,
+              is_default: getAddresses().length === 0, // first one becomes default
+            });
+            track('addr_saved', { id: a.id });
+            card.hidden = true;
+            haptic([20, 40, 20]);
+          }, { once: true });
         }
 
         // Show install card if installable + not installed

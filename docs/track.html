@@ -42,7 +42,7 @@
 
   <header class="topbar">
     <a href="index.html" class="back" aria-label="Back">←</a>
-    <span class="step-label">Tracking</span>
+    <span class="step-label" data-i18n="track.label">Tracking</span>
   </header>
 
   <main class="container">
@@ -55,11 +55,11 @@
       <div class="status-id" id="order-id">—</div>
 
       <ol class="timeline" id="timeline">
-        <li data-status="NEW">Received</li>
-        <li data-status="CONFIRMED">Confirmed</li>
-        <li data-status="PREPARING">Preparing</li>
-        <li data-status="OUT_FOR_DELIVERY">On the way</li>
-        <li data-status="COMPLETED">Delivered</li>
+        <li data-status="NEW" data-i18n="track.timeline.received">Received</li>
+        <li data-status="CONFIRMED" data-i18n="track.timeline.confirmed">Confirmed</li>
+        <li data-status="PREPARING" data-i18n="track.timeline.preparing">Preparing</li>
+        <li data-status="OUT_FOR_DELIVERY" data-i18n="track.timeline.out">On the way</li>
+        <li data-status="COMPLETED" data-i18n="track.timeline.delivered">Delivered</li>
       </ol>
 
       <div id="rider-info" class="rider-info" hidden>
@@ -71,22 +71,22 @@
 
       <!-- Local actions for WhatsApp-mode orders -->
       <div id="local-actions" hidden style="display: grid; gap: 10px; margin-top: 18px;">
-        <button id="mark-delivered" class="btn btn-secondary" type="button">Mark as delivered ✓</button>
-        <button id="share-track" class="btn btn-ghost" type="button" hidden>Share tracking link ↗</button>
+        <button id="mark-delivered" class="btn btn-secondary" type="button" data-i18n="track.mark_delivered">Mark as delivered ✓</button>
+        <button id="share-track" class="btn btn-ghost" type="button" hidden data-i18n="track.share">Share tracking link ↗</button>
       </div>
     </div>
 
     <div style="text-align:center; margin-top: 14px;">
-      <a href="orders.html" class="btn-link">📋 All your orders</a>
+      <a href="orders.html" class="btn-link" data-i18n="track.all_orders">📋 All your orders</a>
       <span style="color: var(--ink-400); margin: 0 8px;">·</span>
-      <a href="index.html" class="btn-link">Home</a>
+      <a href="index.html" class="btn-link" data-i18n="track.home">Home</a>
     </div>
   </main>
 
   <script type="module">
     import {
       ready, fetchOrder, haptic, findInHistory, updateInHistory,
-      naira, relativeTime, track, canShare, shareOrder
+      naira, relativeTime, track, canShare, shareOrder, t
     } from './shell.js';
 
     await ready;

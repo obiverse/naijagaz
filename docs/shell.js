@@ -152,6 +152,71 @@ export async function submitOrder(payload) {
   return res.json();
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// ADDRESS BOOK — saved addresses with optional default
+//
+// Each entry: { id, label, district, address, landmark, gps_lat, gps_lng,
+//               is_default, created_at }. Order step 2 reads the list to
+// render quick-pick chips; settings page does CRUD.
+// ═══════════════════════════════════════════════════════════════════
+
+const ADDRESSES_KEY = 'naijagaz.addresses.v1';
+
+export function getAddresses() {
+  try { return JSON.parse(localStorage.getItem(ADDRESSES_KEY) || '[]'); } catch { return []; }
+}
+function saveAddresses(list) {
+  try { localStorage.setItem(ADDRESSES_KEY, JSON.stringify(list)); } catch {}
+}
+
+export function addAddress(addr) {
+  const list = getAddresses();
+  const id = addr.id || ('A-' + Date.now().toString(36).toUpperCase() + '-' + generateToken(4));
+  const entry = {
+    id,
+    label:    addr.label || '',
+    district: addr.district || '',
+    address:  addr.address || '',
+    landmark: addr.landmark || '',
+    gps_lat:  addr.gps_lat || null,
+    gps_lng:  addr.gps_lng || null,
+    is_default: !!addr.is_default,
+    created_at: addr.created_at || Date.now(),
+  };
+  // If marking default, clear the flag on others
+  if (entry.is_default) list.forEach(a => { a.is_default = false; });
+  // Replace or append
+  const idx = list.findIndex(a => a.id === id);
+  if (idx >= 0) list[idx] = entry;
+  else list.unshift(entry);
+  saveAddresses(list);
+  return entry;
+}
+
+export function removeAddress(id) {
+  const list = getAddresses().filter(a => a.id !== id);
+  saveAddresses(list);
+}
+
+export function setDefaultAddress(id) {
+  const list = getAddresses().map(a => ({ ...a, is_default: a.id === id }));
+  saveAddresses(list);
+}
+
+export function defaultAddress() {
+  const list = getAddresses();
+  return list.find(a => a.is_default) || list[0] || null;
+}
+
+// Heuristic: is this order's address NOT already in the address book?
+// Used to gate the "save this address?" prompt after submit.
+export function isAddressNovel(payload) {
+  if (!payload || !payload.address) return false;
+  const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const target = norm(payload.address) + '|' + (payload.district || '');
+  return !getAddresses().some(a => norm(a.address) + '|' + a.district === target);
+}
+
 // ── WhatsApp mode: build a prefilled wa.me URL from an order payload ──
 //
 // Note: callers MUST invoke window.open(url, '_blank') synchronously inside
@@ -210,6 +275,28 @@ export async function fetchOrder(orderId) {
   const res = await fetch(url);
   if (!res.ok) throw new Error('HTTP_' + res.status);
   return res.json();
+}
+
+// ── Broker health check ───────────────────────────────────
+//
+// Returns 'unconfigured' | 'online' | 'offline'. Used by /admin.html
+// and /settings.html to surface a live connection indicator. Does a
+// 5s-timeout GET to the /ping endpoint (which is defined in the broker).
+
+export async function pingBroker() {
+  if (!BROKER_URL || BROKER_URL.startsWith('PASTE_')) return { status: 'unconfigured' };
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 5000);
+    const url = BROKER_URL + (BROKER_URL.includes('?') ? '&' : '?') + 'action=ping';
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) return { status: 'offline', http: res.status };
+    const body = await res.json();
+    return { status: 'online', version: body.version || null, time: body.time || null };
+  } catch (e) {
+    return { status: 'offline', error: e.name === 'AbortError' ? 'TIMEOUT' : e.message };
+  }
 }
 
 // ── Service worker registration + update detection ──────────
@@ -984,6 +1071,7 @@ const STRINGS = {
     'settings.data':        'YOUR DATA',
     'settings.orders_saved':'Orders saved',
     'settings.events_saved':'Events recorded',
+    'settings.addresses_saved':'Saved addresses',
     'settings.export_orders':'Export orders',
     'settings.export_events':'Export events',
     'settings.clear_history':'Clear order history',
@@ -997,9 +1085,55 @@ const STRINGS = {
     'settings.installed':   '✓ Installed',
     'settings.not_installed':'Not installed',
     'settings.install_now': 'Install now',
+    'settings.broker':      'Broker',
+    'settings.broker.unconfigured': 'No broker yet',
+    'settings.broker.checking':     'Checking…',
+    'settings.broker.online':       '✓ Connected',
+    'settings.broker.offline':      'No reach',
     'settings.about':       'ABOUT',
     'settings.support':     'Support',
     'settings.whitepaper':  'Read the whitepaper',
+
+    // Address book
+    'addr.title':           'Saved addresses',
+    'addr.empty':           'No saved addresses yet. Add one to skip the address step next time.',
+    'addr.add':             '+ Add address',
+    'addr.label':           'Label',
+    'addr.label.ph':        'Home, Office, Mama place…',
+    'addr.save':            'Save address',
+    'addr.cancel':          'Cancel',
+    'addr.delete':          'Delete',
+    'addr.default':         'Default',
+    'addr.set_default':     'Make am default',
+    'addr.confirm_delete':  'You sure say make we delete this address?',
+    'addr.save_prompt':     'Save this address for next time?',
+    'addr.save_yes':        'Save am',
+    'addr.save_no':         'No be now',
+    'addr.pick':            'Use one of your saved addresses',
+    'addr.or_new':          'or type a fresh one below',
+
+    // Operator (admin)
+    'admin.label':          'Operator',
+    'admin.today':          'Today',
+    'admin.lock':           'Lock 🔒',
+    'admin.stat.today':     'today',
+    'admin.stat.revenue':   'revenue',
+    'admin.stat.delivered': 'delivered',
+    'admin.stat.week':      'this week',
+    'admin.filter.status':  'Status',
+    'admin.filter.district':'District',
+    'admin.filter.all':     'All',
+    'admin.empty':          'No order match.',
+    'admin.empty.sub':      'Open the filters small or refresh.',
+    'admin.broker.local':   'Local mode — only the orders on this device.',
+    'admin.broker.connected':'Broker don connect — sheet na source of truth.',
+
+    // Generic
+    'common.loading':       'Loading…',
+    'common.error':         'Something don go wrong.',
+    'common.retry':         'Try again',
+    'common.skip':          'Skip',
+    'common.dismiss':       'Comot',
   },
 };
 

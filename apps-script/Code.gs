@@ -75,8 +75,22 @@ function doPost(e) {
 
 function doGet(e) {
   const action = (e.parameter || {}).action || 'get';
+  if (action === 'ping') return brokerPing(e);
   if (action === 'list') return adminListOrders(e);
   return getOrderPublic(e);
+}
+
+// ─── Broker health check ───────────────────────────────────────────
+// Public, unauthenticated. Returns version + time so callers can render
+// a 'connected' badge with confidence the script is the right one.
+function brokerPing(e) {
+  return jsonResponse({
+    ok: true,
+    version: 'naijagaz-broker-v1',
+    time: new Date().toISOString(),
+    has_termii: !!props().getProperty('TERMII_API_KEY'),
+    has_admin_secret: !!props().getProperty('ADMIN_SECRET'),
+  });
 }
 
 function getOrderPublic(e) {

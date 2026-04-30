@@ -1557,6 +1557,156 @@ fieldset { border: none; padding: 0; margin: 0 0 20px; }
 .status-action-negative:hover { background: rgba(220, 38, 38, 0.14); }
 
 /* ════════════════════════════════════════════════
+   ADDRESS CHIPS — saved-address quick-pick
+   ════════════════════════════════════════════════ */
+
+.address-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+.address-chip {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 200px;
+  max-width: 260px;
+  padding: 12px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: border-color 0.15s, transform 0.06s var(--ease-out-expo), box-shadow 0.2s;
+}
+.address-chip:hover { border-color: var(--cobalt-300); box-shadow: var(--sh-sm); }
+.address-chip:active { transform: scale(0.97); }
+.address-chip strong {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--fs-body-sm);
+  font-weight: 700;
+  color: var(--ink-900);
+  letter-spacing: -0.01em;
+}
+.address-chip small {
+  font-size: var(--fs-caption);
+  color: var(--ink-500);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.address-chip.is-default {
+  border-color: var(--cobalt-600);
+  background: var(--cobalt-50);
+}
+.address-chip.is-default::after {
+  content: '★';
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--ember-500);
+  font-size: 12px;
+}
+.address-chip { position: relative; }
+
+/* ════════════════════════════════════════════════
+   BROKER PIP — connection indicator
+   ════════════════════════════════════════════════ */
+
+.broker-pip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: auto;
+  font-size: 0;
+  flex-shrink: 0;
+}
+.broker-pip-unconfigured { background: var(--ink-400); }
+.broker-pip-checking     { background: var(--cobalt-300); animation: pip-pulse 1.4s ease-in-out infinite; }
+.broker-pip-online       {
+  background: #16A34A;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+}
+.broker-pip-offline      {
+  background: var(--warn);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}
+
+/* Address book in settings */
+.addr-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line-2);
+}
+.addr-row:last-child { border-bottom: none; }
+.addr-info {
+  flex: 1;
+  min-width: 0;
+}
+.addr-info strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--fs-body-sm);
+  font-weight: 700;
+  color: var(--ink-900);
+  letter-spacing: -0.01em;
+}
+.addr-info small {
+  display: block;
+  font-size: var(--fs-caption);
+  color: var(--ink-500);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.addr-default-badge {
+  background: var(--ember-500);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+}
+.addr-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.addr-actions button {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-600);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+}
+.addr-actions button:hover { border-color: var(--cobalt-600); color: var(--cobalt-700); }
+.addr-actions button.danger { color: var(--warn); }
+.addr-actions button.danger:hover { border-color: var(--warn); background: rgba(220, 38, 38, 0.06); }
+
+/* ════════════════════════════════════════════════
    GPS BUTTON — order step 2
    ════════════════════════════════════════════════ */
 
