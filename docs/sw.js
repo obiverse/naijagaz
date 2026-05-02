@@ -6,7 +6,7 @@
 // caching entirely (always-fresh data).
 // On message (SKIP_WAITING): activate the new SW; the page reloads.
 
-const CACHE = 'ng-5821f98';
+const CACHE = 'ng-36337bf';
 
 const PRECACHE = [
   './',
