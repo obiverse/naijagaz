@@ -198,22 +198,25 @@
       COMPLETED: '✨',
       CANCELLED: '✕',
     };
-    const BANNERS = {
-      NEW: 'Order received',
-      CONFIRMED: 'Confirmed ✓',
-      PREPARING: 'Being prepared 🔥',
-      OUT_FOR_DELIVERY: 'On the way 🏍️',
-      COMPLETED: 'Delivered ✨',
-      CANCELLED: 'Cancelled',
-    };
-    const MESSAGES = {
-      NEW: 'Order received. We will confirm shortly.',
-      CONFIRMED: 'Confirmed. Vendor is being notified.',
-      PREPARING: 'Your gas is being prepared at our partner plant.',
-      OUT_FOR_DELIVERY: 'On the way. ETA ~30 mins.',
-      COMPLETED: 'Delivered. Thank you for using NaijaGaz!',
-      CANCELLED: 'This order was cancelled.',
-    };
+    // Live i18n: read from STRINGS via t() each time the status renders.
+    // Toggling language in /settings.html updates the next render of this
+    // page automatically.
+    const banner_for = (s) => ({
+      NEW:              t('track.banner.received'),
+      CONFIRMED:        t('track.banner.confirmed'),
+      PREPARING:        t('track.banner.preparing'),
+      OUT_FOR_DELIVERY: t('track.banner.out'),
+      COMPLETED:        t('track.banner.delivered'),
+      CANCELLED:        t('common.error'),
+    }[s]);
+    const message_for = (s) => ({
+      NEW:              t('track.banner.received') + '.',
+      CONFIRMED:        t('track.banner.confirmed') + '.',
+      PREPARING:        t('track.banner.preparing') + '.',
+      OUT_FOR_DELIVERY: t('track.banner.out') + ' ETA ~30 mins.',
+      COMPLETED:        t('track.banner.delivered') + '.',
+      CANCELLED:        t('common.error'),
+    }[s]);
 
     async function refresh() {
       try {
@@ -247,9 +250,9 @@
           riderInfo.hidden = true;
         }
 
-        statusText.textContent = MESSAGES[r.status] || 'Working on it…';
+        statusText.textContent = message_for(r.status) || t('common.loading');
         if (!(fresh && r.status === 'NEW')) {
-          banner.textContent = BANNERS[r.status] || 'Order';
+          banner.textContent = banner_for(r.status) || 'Order';
         }
       } catch (err) {
         if (err.message === 'BROKER_NOT_CONFIGURED') {
